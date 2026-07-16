@@ -1,11 +1,12 @@
 cff-version: 1.2.0
 message: "If you use VoltRL, please cite this software and the associated manuscript."
 type: software
-title: "VoltRL: Audit-Ready Battery-Arbitrage Benchmark"
+title: "VoltRL: Audit-Ready Sequential and Day-Ahead Block Battery-Arbitrage Benchmark"
 authors:
   - family-names: Khan
     given-names: Mohammad Rezwan
-version: 1.0.0
+    orcid: "https://orcid.org/0000-0002-1532-0598"
+version: 1.1.0
 date-released: 2026-07-16
 repository-code: "https://github.com/mohammadrezwankhan/voltrl"
 url: "https://github.com/mohammadrezwankhan/voltrl"

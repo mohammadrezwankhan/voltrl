@@ -1,14 +1,12 @@
 """Audit-ready VoltRL benchmark experiments.
 
-This module revises the original illustrative VoltRL experiment into a
-chronologically evaluated benchmark.  It provides leakage-free expanding-
-window model selection, continuous predictive scoring with full-support
-Gaussian-mixture emissions, price-only and hour-aware finite-horizon MDPs,
-implementable baselines, multi-seed uncertainty, two historical-market pilots,
-and prespecified sensitivity analyses.
-
-The day-ahead market series are treated as sequentially revealed benchmark
-signals.  The experiment is not a market-bidding or deployment study.
+This module implements a chronologically evaluated, audit-ready benchmark.  It
+provides leakage-free expanding-window model selection, continuous predictive
+scoring with full-support Gaussian-mixture emissions, price-only and hour-aware
+finite-horizon MDPs, implementable baselines, multi-seed uncertainty, two
+historical day-ahead block-scheduling pilots, and prespecified sensitivity
+analyses.  Historical schedules are fixed before each delivery day; realized
+day-ahead clearing prices are used only for settlement.
 """
 
 from __future__ import annotations
@@ -47,10 +45,13 @@ from voltrl import (
 
 POLICY_HOUR = "Hour-aware finite-horizon MDP"
 POLICY_PRICE = "Price-only finite-horizon MDP"
-POLICY_MPC = "Seasonal 24-hour MPC"
+POLICY_MPC = "Seasonal autoregressive 24-hour MPC"
 POLICY_THRESHOLD = "Training-quantile threshold"
 POLICY_IDLE = "Idle"
 POLICY_ORACLE = "Perfect-foresight upper bound"
+POLICY_BLOCK = "SARX day-ahead block DP"
+POLICY_BLOCK_SEASONAL = "Seasonal-mean day-ahead block DP"
+POLICY_BLOCK_PERSISTENCE = "Previous-day persistence block DP"
 REPOSITORY_URL = "https://github.com/mohammadrezwankhan/voltrl"
 ACTION_TIE_ORDER = np.array(
     [int(Action.IDLE), int(Action.CHARGE), int(Action.DISCHARGE)], dtype=int
@@ -71,6 +72,18 @@ class StateModel:
     @property
     def n_bins(self) -> int:
         return self.discretizer.n_bins
+
+
+@dataclass
+class SeasonalARModel:
+    """Regularized seasonal autoregression fitted on training data only."""
+
+    lags: tuple[int, ...]
+    coefficients: np.ndarray
+    price_mean: float
+    price_scale: float
+    clip_low: float
+    clip_high: float
 
 
 def _validated_frame(
@@ -107,6 +120,25 @@ def chronological_split(
     return clean.iloc[:split].copy(), clean.iloc[split:].copy()
 
 
+def chronological_day_split(
+    frame: pd.DataFrame, train_fraction: float = 0.70
+) -> tuple[pd.DataFrame, pd.DataFrame, int]:
+    """Chronologically split complete UTC delivery days for block scheduling."""
+
+    clean = _validated_frame(frame)
+    day = clean["timestamp"].dt.floor("D")
+    counts = day.value_counts()
+    complete_days = set(counts[counts == 24].index)
+    complete = clean.loc[day.isin(complete_days)].copy().reset_index(drop=True)
+    removed = len(clean) - len(complete)
+    n_days = len(complete) // 24
+    split_days = int(math.floor(n_days * train_fraction))
+    if split_days < 30 or n_days - split_days < 30:
+        raise ValueError("At least 30 complete train and test days are required.")
+    split = split_days * 24
+    return complete.iloc[:split].copy(), complete.iloc[split:].copy(), removed
+
+
 def _emission_parameters(
     prices: np.ndarray, labels: np.ndarray, n_bins: int
 ) -> tuple[np.ndarray, np.ndarray]:
@@ -126,11 +158,12 @@ def fit_state_model(
     frame: pd.DataFrame,
     n_bins: int,
     calendar_aware: bool,
-    prior_strength: float = 1.0,
+    prior_strength: float = 12.0,
 ) -> StateModel:
     """Fit a price-only or hour-conditioned transition kernel.
 
-    A unit-strength empirical-marginal Dirichlet prior prevents zero rows.  In
+    A hierarchical empirical-marginal Dirichlet prior prevents zero rows and
+    stabilizes the expanded high-resolution candidate set.  In
     the calendar-aware model, T[h, i, j] predicts the next price bin from the
     current UTC hour and current price bin; the next hour is deterministic.
     """
@@ -278,13 +311,14 @@ def finite_horizon_policy(
     n_soc = len(battery.soc_levels)
     k = model.n_bins
     next_soc = _feasible_next_indices(battery)
-    rewards = np.array(
-        [
-            [battery.realized_reward(price, action) for price in model.emission_mean]
-            for action in Action
-        ],
-        dtype=float,
-    )
+    rewards = np.full((n_soc, len(Action), k), -np.inf, dtype=float)
+    for soc_i, soc in enumerate(battery.soc_levels):
+        for action in Action:
+            if next_soc[soc_i, action] >= 0:
+                rewards[soc_i, action] = [
+                    battery.realized_reward(price, action, float(soc))
+                    for price in model.emission_mean
+                ]
     decisions = np.empty((horizon, n_soc, k), dtype=np.int8)
 
     if model.calendar_aware:
@@ -292,31 +326,27 @@ def finite_horizon_policy(
             (
                 terminal_salvage_price
                 * battery.discharge_efficiency
-                * battery.soc_levels[:, None, None]
+                * battery.soc_levels[:, None]
             ),
-            (n_soc, 24, k),
+            (n_soc, k),
         ).copy()
-        next_hours = (np.arange(24) + 1) % 24
         for t in range(horizon - 1, -1, -1):
-            following = values_next[:, next_hours, :]
-            continuation = np.einsum(
-                "hij,shj->shi", model.transition, following, optimize=True
-            )
-            q_order = np.full((n_soc, 24, k, len(Action)), -np.inf, dtype=float)
+            hour = hours[t]
+            continuation = values_next @ model.transition[hour].T
+            q_order = np.full((n_soc, k, len(Action)), -np.inf, dtype=float)
             for pos, action in enumerate(ACTION_TIE_ORDER):
                 for soc_i in range(n_soc):
                     dest_soc = next_soc[soc_i, action]
                     if dest_soc >= 0:
-                        q_order[soc_i, :, :, pos] = (
-                            rewards[action][None, :]
+                        q_order[soc_i, :, pos] = (
+                            rewards[soc_i, action]
                             + planner_discount * continuation[dest_soc]
                         )
-            best_position = np.argmax(q_order, axis=3)
-            actions = ACTION_TIE_ORDER[best_position]
-            decisions[t] = actions[:, hours[t], :]
+            best_position = np.argmax(q_order, axis=2)
+            decisions[t] = ACTION_TIE_ORDER[best_position]
             values_next = np.take_along_axis(
-                q_order, best_position[:, :, :, None], axis=3
-            )[:, :, :, 0]
+                q_order, best_position[:, :, None], axis=2
+            )[:, :, 0]
     else:
         values_next = np.broadcast_to(
             (
@@ -334,7 +364,7 @@ def finite_horizon_policy(
                     dest_soc = next_soc[soc_i, action]
                     if dest_soc >= 0:
                         q_order[soc_i, :, pos] = (
-                            rewards[action]
+                            rewards[soc_i, action]
                             + planner_discount * continuation[dest_soc]
                         )
             best_position = np.argmax(q_order, axis=2)
@@ -368,7 +398,9 @@ def trajectory_from_actions(
         next_soc = soc_before + battery.soc_delta(action)
         if not -1e-10 <= next_soc <= battery.capacity_mwh + 1e-10:
             raise AssertionError("A simulated policy selected an infeasible action.")
-        reward = battery.realized_reward(float(row["price"]), action)
+        energy_cash, degradation_cost, reward = battery.reward_components(
+            float(row["price"]), action, soc_before
+        )
         soc_i = int(round(next_soc / battery.energy_step_mwh))
         cumulative += reward
         rows.append(
@@ -379,6 +411,8 @@ def trajectory_from_actions(
                 "soc_before_mwh": soc_before,
                 "action": str(ACTION_NAMES[action]),
                 "soc_after_mwh": float(next_soc),
+                "energy_cash_flow": float(energy_cash),
+                "degradation_cost": float(degradation_cost),
                 "profit": float(reward),
                 "cumulative_profit": float(cumulative),
             }
@@ -442,9 +476,112 @@ def _deterministic_value_update(
             if destination >= 0:
                 result[soc_i] = max(
                     result[soc_i],
-                    battery.realized_reward(price, action) + values_next[destination],
+                    battery.realized_reward(
+                        price, action, float(battery.soc_levels[soc_i])
+                    )
+                    + values_next[destination],
                 )
     return result
+
+
+def _seasonal_features(timestamp: pd.Timestamp) -> np.ndarray:
+    hour = float(timestamp.hour)
+    week_hour = float(timestamp.dayofweek * 24 + timestamp.hour)
+    year_hour = float((timestamp.dayofyear - 1) * 24 + timestamp.hour)
+    return np.array(
+        [
+            math.sin(2.0 * math.pi * hour / 24.0),
+            math.cos(2.0 * math.pi * hour / 24.0),
+            math.sin(2.0 * math.pi * week_hour / 168.0),
+            math.cos(2.0 * math.pi * week_hour / 168.0),
+            math.sin(2.0 * math.pi * year_hour / (24.0 * 365.25)),
+            math.cos(2.0 * math.pi * year_hour / (24.0 * 365.25)),
+        ],
+        dtype=float,
+    )
+
+
+def fit_seasonal_ar(
+    train: pd.DataFrame,
+    lags: tuple[int, ...] = (1, 2, 24, 48, 168),
+    ridge: float = 1e-3,
+) -> SeasonalARModel:
+    """Fit a ridge-stabilized seasonal autoregression on the training segment."""
+
+    clean = _validated_frame(train)
+    prices = clean["price"].to_numpy(dtype=float)
+    mean = float(np.mean(prices))
+    scale = max(float(np.std(prices, ddof=1)), 1.0)
+    normalized = (prices - mean) / scale
+    start = max(lags)
+    rows: list[np.ndarray] = []
+    targets: list[float] = []
+    for t in range(start, len(clean)):
+        lag_values = normalized[t - np.asarray(lags, dtype=int)]
+        rows.append(
+            np.concatenate(
+                ([1.0], lag_values, _seasonal_features(clean["timestamp"].iloc[t]))
+            )
+        )
+        targets.append(float(normalized[t]))
+    design = np.vstack(rows)
+    target = np.asarray(targets, dtype=float)
+    penalty = np.eye(design.shape[1], dtype=float) * ridge
+    penalty[0, 0] = 0.0
+    coefficients = np.linalg.solve(
+        design.T @ design + penalty, design.T @ target
+    )
+    low, high = np.quantile(prices, [0.001, 0.999])
+    margin = 0.25 * (high - low)
+    return SeasonalARModel(
+        lags=lags,
+        coefficients=coefficients,
+        price_mean=mean,
+        price_scale=scale,
+        clip_low=float(low - margin),
+        clip_high=float(high + margin),
+    )
+
+
+def seasonal_ar_forecast(
+    model: SeasonalARModel,
+    observed_prices: np.ndarray,
+    timestamps: pd.Series,
+    current_index: int,
+    steps: int = 23,
+) -> np.ndarray:
+    """Recursively forecast future prices using only observations available now."""
+
+    predictions: dict[int, float] = {}
+    for target_index in range(current_index + 1, current_index + steps + 1):
+        normalized_lags = []
+        for lag in model.lags:
+            source = target_index - lag
+            value = (
+                predictions[source]
+                if source > current_index
+                else float(observed_prices[source])
+            )
+            normalized_lags.append(
+                (value - model.price_mean) / model.price_scale
+            )
+        feature = np.concatenate(
+            (
+                [1.0],
+                normalized_lags,
+                _seasonal_features(pd.Timestamp(timestamps.iloc[target_index])),
+            )
+        )
+        predicted = model.price_mean + model.price_scale * float(
+            feature @ model.coefficients
+        )
+        predictions[target_index] = float(
+            np.clip(predicted, model.clip_low, model.clip_high)
+        )
+    return np.array(
+        [predictions[i] for i in range(current_index + 1, current_index + steps + 1)],
+        dtype=float,
+    )
 
 
 def seasonal_mpc_trajectory(
@@ -454,41 +591,156 @@ def seasonal_mpc_trajectory(
     initial_soc_mwh: float,
     terminal_salvage_price: float,
 ) -> pd.DataFrame:
-    """Causal 24-hour receding-horizon baseline using training hourly means."""
+    """Causal 24-hour MPC driven by a training-fitted seasonal AR forecast."""
 
-    seasonal = train.assign(hour=train["timestamp"].dt.hour).groupby("hour")[
-        "price"
-    ].mean()
-    if len(seasonal) != 24:
-        raise ValueError("Every UTC hour must occur in the training segment.")
-    continuation = np.empty((24, len(battery.soc_levels)), dtype=float)
+    train_clean = _validated_frame(train)
+    test_clean = _validated_frame(test)
+    forecast_model = fit_seasonal_ar(train_clean)
+    combined_prices = np.concatenate(
+        (
+            train_clean["price"].to_numpy(dtype=float),
+            test_clean["price"].to_numpy(dtype=float),
+        )
+    )
+    combined_timestamps = pd.concat(
+        [train_clean["timestamp"], test_clean["timestamp"]], ignore_index=True
+    )
     terminal = (
         terminal_salvage_price
         * battery.discharge_efficiency
         * battery.soc_levels
     )
-    for current_hour in range(24):
-        values = terminal.copy()
-        for lead in range(23, 0, -1):
-            forecast = float(seasonal.loc[(current_hour + lead) % 24])
-            values = _deterministic_value_update(values, forecast, battery)
-        continuation[current_hour] = values
-
     next_soc = _feasible_next_indices(battery)
     soc_i = int(np.where(np.isclose(battery.soc_levels, initial_soc_mwh))[0][0])
-    actions = np.full(len(test), int(Action.IDLE), dtype=int)
-    for t, row in test.reset_index(drop=True).iterrows():
-        hour = int(row["timestamp"].hour)
+    actions = np.full(len(test_clean), int(Action.IDLE), dtype=int)
+    offset = len(train_clean)
+    for t, row in test_clean.reset_index(drop=True).iterrows():
+        current_index = offset + t
+        available_steps = min(23, len(combined_prices) - current_index - 1)
+        forecasts = seasonal_ar_forecast(
+            forecast_model,
+            combined_prices,
+            combined_timestamps,
+            current_index,
+            steps=available_steps,
+        )
+        values = terminal.copy()
+        for forecast in forecasts[::-1]:
+            values = _deterministic_value_update(values, float(forecast), battery)
         candidates: list[tuple[float, int]] = []
         for tie_rank, action in enumerate(ACTION_TIE_ORDER):
             destination = next_soc[soc_i, action]
             if destination >= 0:
-                value = battery.realized_reward(float(row["price"]), action)
-                value += continuation[hour, destination]
+                value = battery.realized_reward(
+                    float(row["price"]), action, float(battery.soc_levels[soc_i])
+                )
+                value += values[destination]
                 candidates.append((value - tie_rank * 1e-12, int(action)))
         actions[t] = max(candidates)[1]
         soc_i = next_soc[soc_i, actions[t]]
-    return trajectory_from_actions(test, actions, battery, initial_soc_mwh)
+    return trajectory_from_actions(test_clean, actions, battery, initial_soc_mwh)
+
+
+def day_ahead_block_trajectory(
+    train: pd.DataFrame,
+    test: pd.DataFrame,
+    battery: BatterySpec,
+    initial_soc_mwh: float,
+    terminal_salvage_price: float,
+    forecast_method: str,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Commit one feasible 24-hour schedule before each delivery day.
+
+    The information set contains prices observed through the preceding UTC
+    day.  The actual delivery-day clearing prices are used only to settle the
+    already committed schedule.
+    """
+
+    train_clean = _validated_frame(train)
+    test_clean = _validated_frame(test)
+    if len(test_clean) % 24:
+        raise ValueError("The block-schedule test segment must contain full days.")
+    combined_prices = np.concatenate(
+        (
+            train_clean["price"].to_numpy(dtype=float),
+            test_clean["price"].to_numpy(dtype=float),
+        )
+    )
+    combined_timestamps = pd.concat(
+        [train_clean["timestamp"], test_clean["timestamp"]], ignore_index=True
+    )
+    sarx = fit_seasonal_ar(train_clean)
+    hourly_mean = (
+        train_clean.assign(hour=train_clean["timestamp"].dt.hour)
+        .groupby("hour")["price"]
+        .mean()
+        .reindex(range(24))
+    )
+    if hourly_mean.isna().any():
+        raise ValueError("Every UTC hour must occur in the training segment.")
+
+    offset = len(train_clean)
+    actions = np.full(len(test_clean), int(Action.IDLE), dtype=int)
+    forecast_rows: list[dict[str, object]] = []
+    current_soc = float(initial_soc_mwh)
+    action_lookup = {str(name): i for i, name in enumerate(ACTION_NAMES)}
+    for start in range(0, len(test_clean), 24):
+        current_index = offset + start - 1
+        delivery = test_clean.iloc[start : start + 24]
+        if forecast_method == "sarx":
+            forecast = seasonal_ar_forecast(
+                sarx,
+                combined_prices,
+                combined_timestamps,
+                current_index,
+                steps=24,
+            )
+        elif forecast_method == "seasonal_mean":
+            forecast = hourly_mean.loc[delivery["timestamp"].dt.hour].to_numpy(
+                dtype=float
+            )
+        elif forecast_method == "persistence":
+            forecast = combined_prices[current_index - 23 : current_index + 1].copy()
+        else:
+            raise ValueError(f"Unknown forecast method: {forecast_method}")
+
+        planned = perfect_foresight_dispatch(
+            forecast,
+            delivery["timestamp"].astype(str).tolist(),
+            battery,
+            current_soc,
+            terminal_salvage_price,
+        )
+        day_actions = np.array(
+            [action_lookup[str(value)] for value in planned["action"]], dtype=int
+        )
+        actions[start : start + 24] = day_actions
+        current_soc = float(planned["soc_after_mwh"].iloc[-1])
+        actual = delivery["price"].to_numpy(dtype=float)
+        for lead, (timestamp, predicted, realized) in enumerate(
+            zip(delivery["timestamp"], forecast, actual), start=1
+        ):
+            forecast_rows.append(
+                {
+                    "forecast_method": forecast_method,
+                    "information_available_through_delivery_timestamp": str(
+                        train_clean["timestamp"].iloc[-1]
+                        if start == 0
+                        else test_clean["timestamp"].iloc[start - 1]
+                    ),
+                    "commitment_protocol": "schedule fixed before delivery-day auction clearing",
+                    "delivery_timestamp": str(timestamp),
+                    "lead_hour": lead,
+                    "forecast_price": float(predicted),
+                    "realized_price": float(realized),
+                    "error": float(predicted - realized),
+                }
+            )
+
+    trajectory = trajectory_from_actions(
+        test_clean, actions, battery, initial_soc_mwh
+    )
+    return trajectory, pd.DataFrame(forecast_rows)
 
 
 def trajectory_metrics(
@@ -498,6 +750,14 @@ def trajectory_metrics(
     terminal_salvage_price: float,
 ) -> dict[str, float | int]:
     cash = float(trajectory["profit"].sum())
+    energy_cash_flow = float(
+        trajectory.get("energy_cash_flow", trajectory["profit"]).sum()
+    )
+    degradation_cost = float(
+        trajectory.get(
+            "degradation_cost", pd.Series(np.zeros(len(trajectory)), dtype=float)
+        ).sum()
+    )
     terminal_soc = float(trajectory["soc_after_mwh"].iloc[-1])
     adjusted = cash + terminal_salvage_price * battery.discharge_efficiency * (
         terminal_soc - initial_soc_mwh
@@ -513,6 +773,8 @@ def trajectory_metrics(
     return {
         "test_hours": len(trajectory),
         "cash_profit": cash,
+        "energy_market_cash_flow": energy_cash_flow,
+        "modeled_degradation_cost": degradation_cost,
         "terminal_soc_mwh": terminal_soc,
         "inventory_adjusted_profit": adjusted,
         "annualized_adjusted_profit": adjusted * 8760.0 / len(trajectory),
@@ -649,6 +911,107 @@ def evaluate_case(
     return pd.DataFrame(rows), selection, diagnostics
 
 
+def evaluate_day_ahead_case(
+    frame: pd.DataFrame,
+    case: str,
+    battery: BatterySpec,
+    initial_soc_mwh: float = 200.0,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, dict[str, object]]:
+    """Evaluate schedules committed as one 24-hour block before delivery."""
+
+    train, test, removed_incomplete_hours = chronological_day_split(frame)
+    salvage = float(np.median(train["price"]))
+    trajectories: dict[str, pd.DataFrame] = {}
+    forecasts: list[pd.DataFrame] = []
+    for label, method in (
+        (POLICY_BLOCK, "sarx"),
+        (POLICY_BLOCK_PERSISTENCE, "persistence"),
+        (POLICY_BLOCK_SEASONAL, "seasonal_mean"),
+    ):
+        trajectory, forecast = day_ahead_block_trajectory(
+            train,
+            test,
+            battery,
+            initial_soc_mwh,
+            salvage,
+            forecast_method=method,
+        )
+        trajectories[label] = trajectory
+        forecast.insert(0, "case", case)
+        forecasts.append(forecast)
+    trajectories[POLICY_IDLE] = idle_trajectory(test, battery, initial_soc_mwh)
+    oracle = perfect_foresight_dispatch(
+        test["price"].to_numpy(dtype=float),
+        test["timestamp"].astype(str).tolist(),
+        battery,
+        initial_soc_mwh,
+        salvage,
+    )
+    trajectories[POLICY_ORACLE] = oracle
+
+    rows: list[dict[str, object]] = []
+    oracle_metrics = trajectory_metrics(oracle, battery, initial_soc_mwh, salvage)
+    oracle_adjusted = float(oracle_metrics["inventory_adjusted_profit"])
+    for policy_index, (policy, trajectory) in enumerate(trajectories.items()):
+        metrics = trajectory_metrics(trajectory, battery, initial_soc_mwh, salvage)
+        daily_mean, daily_low, daily_high = moving_block_daily_difference(
+            trajectories[POLICY_BLOCK], trajectory, seed=5000 + policy_index
+        )
+        metrics.update(
+            {
+                "case": case,
+                "policy": policy,
+                "information_protocol": "24-hour schedule fixed before delivery day",
+                "oracle_efficiency_percent": (
+                    100.0 * float(metrics["inventory_adjusted_profit"]) / oracle_adjusted
+                    if oracle_adjusted > 0
+                    else float("nan")
+                ),
+                "mean_daily_cash_advantage_sarx_block_minus_policy": daily_mean,
+                "daily_advantage_block_ci95_lower": daily_low,
+                "daily_advantage_block_ci95_upper": daily_high,
+                "daily_advantage_block_days": 7,
+                "daily_advantage_bootstrap_replications": 5000,
+            }
+        )
+        rows.append(metrics)
+
+    forecast_detail = pd.concat(forecasts, ignore_index=True)
+    forecast_summary = (
+        forecast_detail.assign(
+            absolute_error=lambda value: value["error"].abs(),
+            squared_error=lambda value: value["error"] ** 2,
+        )
+        .groupby(["case", "forecast_method"], as_index=False)
+        .agg(
+            observations=("error", "size"),
+            mean_error=("error", "mean"),
+            mean_absolute_error=("absolute_error", "mean"),
+            mean_squared_error=("squared_error", "mean"),
+        )
+    )
+    forecast_summary["root_mean_squared_error"] = np.sqrt(
+        forecast_summary.pop("mean_squared_error")
+    )
+    diagnostics = {
+        "case": case,
+        "observations": len(frame),
+        "complete_day_observations": len(train) + len(test),
+        "removed_incomplete_boundary_hours": removed_incomplete_hours,
+        "train_hours": len(train),
+        "test_hours": len(test),
+        "train_start": str(train["timestamp"].iloc[0]),
+        "train_end": str(train["timestamp"].iloc[-1]),
+        "test_start": str(test["timestamp"].iloc[0]),
+        "test_end": str(test["timestamp"].iloc[-1]),
+        "terminal_salvage_price": salvage,
+        "price_min": float(frame["price"].min()),
+        "price_max": float(frame["price"].max()),
+        "price_mean": float(frame["price"].mean()),
+    }
+    return pd.DataFrame(rows), forecast_summary, forecast_detail, diagnostics
+
+
 def load_opsd_markets(csv_path: Path) -> tuple[dict[str, pd.DataFrame], pd.DataFrame]:
     """Load and minimally repair DK1/DK2 from OPSD version 2020-10-06."""
 
@@ -657,7 +1020,10 @@ def load_opsd_markets(csv_path: Path) -> tuple[dict[str, pd.DataFrame], pd.DataF
     raw["utc_timestamp"] = pd.to_datetime(raw["utc_timestamp"], utc=True)
     markets: dict[str, pd.DataFrame] = {}
     quality_rows: list[dict[str, object]] = []
-    for case, column in (("DK1 historical", columns[1]), ("DK2 historical", columns[2])):
+    for case, column in (
+        ("DK1 day-ahead block", columns[1]),
+        ("DK2 day-ahead block", columns[2]),
+    ):
         nonmissing = raw.loc[raw[column].notna(), "utc_timestamp"]
         start, end = nonmissing.iloc[0], nonmissing.iloc[-1]
         subset = raw.loc[
@@ -820,6 +1186,152 @@ def sensitivity_analysis(
     return pd.DataFrame(parameter_rows), pd.DataFrame(gamma_rows)
 
 
+def evaluate_block_policy(
+    frame: pd.DataFrame,
+    battery: BatterySpec,
+    initial_soc_mwh: float,
+) -> dict[str, float | int]:
+    train, test, _ = chronological_day_split(frame)
+    salvage = float(np.median(train["price"]))
+    learned, _ = day_ahead_block_trajectory(
+        train,
+        test,
+        battery,
+        initial_soc_mwh,
+        salvage,
+        forecast_method="sarx",
+    )
+    oracle = perfect_foresight_dispatch(
+        test["price"].to_numpy(dtype=float),
+        test["timestamp"].astype(str).tolist(),
+        battery,
+        initial_soc_mwh,
+        salvage,
+    )
+    result = trajectory_metrics(learned, battery, initial_soc_mwh, salvage)
+    oracle_result = trajectory_metrics(oracle, battery, initial_soc_mwh, salvage)
+    result["oracle_efficiency_percent"] = (
+        100.0
+        * float(result["inventory_adjusted_profit"])
+        / float(oracle_result["inventory_adjusted_profit"])
+    )
+    return result
+
+
+def revision_sensitivity_analysis(
+    synthetic_frame: pd.DataFrame,
+    synthetic_bins: int,
+    historical_frame: pd.DataFrame,
+    initial_soc_mwh: float,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Evaluate physical, planner, and degradation-model dependence."""
+
+    synthetic_train, _ = chronological_split(synthetic_frame)
+    synthetic_model = fit_state_model(
+        synthetic_train, synthetic_bins, calendar_aware=True
+    )
+    parameter_rows: list[dict[str, object]] = []
+    gamma_rows: list[dict[str, object]] = []
+    degradation_rows: list[dict[str, object]] = []
+
+    for case in ("Synthetic seed 42", "DK1 day-ahead block"):
+        for eta in (1.00, 0.95, 0.90):
+            for degradation in (0.0, 5.0, 15.0):
+                battery = BatterySpec(
+                    charge_efficiency=eta,
+                    discharge_efficiency=eta,
+                    degradation_cost_per_mwh=degradation,
+                    nonlinear_degradation=True,
+                    dod_stress_exponent=1.6,
+                    linear_degradation_fraction=0.25,
+                    soc_stress_cost_per_hour=1.0,
+                )
+                if case.startswith("Synthetic"):
+                    row = evaluate_single_policy(
+                        synthetic_frame, synthetic_model, battery, initial_soc_mwh
+                    )
+                else:
+                    row = evaluate_block_policy(
+                        historical_frame, battery, initial_soc_mwh
+                    )
+                row.update(
+                    {
+                        "case": case,
+                        "symmetric_efficiency": eta,
+                        "round_trip_efficiency": eta**2,
+                        "degradation_cost_per_internal_mwh": degradation,
+                        "degradation_model": "nonlinear DOD + SOC stress",
+                    }
+                )
+                parameter_rows.append(row)
+
+    primary = BatterySpec(
+        charge_efficiency=0.95,
+        discharge_efficiency=0.95,
+        degradation_cost_per_mwh=5.0,
+        nonlinear_degradation=True,
+        dod_stress_exponent=1.6,
+        linear_degradation_fraction=0.25,
+        soc_stress_cost_per_hour=1.0,
+    )
+    for gamma in (0.95, 0.99, 1.00):
+        row = evaluate_single_policy(
+            synthetic_frame,
+            synthetic_model,
+            primary,
+            initial_soc_mwh,
+            planner_discount=gamma,
+        )
+        row.update({"case": "Synthetic seed 42", "planner_discount": gamma})
+        gamma_rows.append(row)
+
+    model_specs = (
+        (
+            "No degradation cost",
+            BatterySpec(charge_efficiency=0.95, discharge_efficiency=0.95),
+        ),
+        (
+            "Linear throughput proxy",
+            BatterySpec(
+                charge_efficiency=0.95,
+                discharge_efficiency=0.95,
+                degradation_cost_per_mwh=5.0,
+            ),
+        ),
+        ("Nonlinear DOD + SOC stress", primary),
+    )
+    for label, battery in model_specs:
+        for case in ("Synthetic seed 42", "DK1 day-ahead block"):
+            if case.startswith("Synthetic"):
+                row = evaluate_single_policy(
+                    synthetic_frame, synthetic_model, battery, initial_soc_mwh
+                )
+            else:
+                row = evaluate_block_policy(
+                    historical_frame, battery, initial_soc_mwh
+                )
+            row.update(
+                {
+                    "case": case,
+                    "degradation_model": label,
+                    "dod_stress_exponent": battery.dod_stress_exponent,
+                    "linear_degradation_fraction": (
+                        battery.linear_degradation_fraction
+                        if battery.nonlinear_degradation
+                        else 1.0
+                    ),
+                    "soc_stress_cost_per_hour": battery.soc_stress_cost_per_hour,
+                }
+            )
+            degradation_rows.append(row)
+
+    return (
+        pd.DataFrame(parameter_rows),
+        pd.DataFrame(gamma_rows),
+        pd.DataFrame(degradation_rows),
+    )
+
+
 def solver_diagnostics(frame: pd.DataFrame, n_bins: int) -> pd.DataFrame:
     """Retain VI/PI agreement only as a software-verification diagnostic."""
 
@@ -884,8 +1396,10 @@ def make_figures(
     synthetic_summary: pd.DataFrame,
     paired: pd.DataFrame,
     real_metrics: pd.DataFrame,
+    forecast_summary: pd.DataFrame,
     sensitivity: pd.DataFrame,
     gamma_sensitivity: pd.DataFrame,
+    degradation_sensitivity: pd.DataFrame,
 ) -> None:
     figures = output_dir / "figures"
     figures.mkdir(parents=True, exist_ok=True)
@@ -900,11 +1414,7 @@ def make_figures(
     axes[0].set_title("A. Last 60 days of the historical benchmark")
     axes[0].legend(ncol=2, frameon=False)
     axes[0].tick_params(axis="x", rotation=20)
-    historical_selection = selections[selections["case"] == "DK1 historical"]
-    means = (
-        historical_selection.groupby(["n_bins", "model"], as_index=False)["mean_nll"]
-        .mean()
-    )
+    means = selections.groupby(["n_bins", "model"], as_index=False)["mean_nll"].mean()
     for model, group in means.groupby("model"):
         axes[1].plot(
             group["n_bins"],
@@ -914,7 +1424,7 @@ def make_figures(
         )
     axes[1].set_xlabel("Candidate number of price bins")
     axes[1].set_ylabel("Mean validation NLL")
-    axes[1].set_title("B. Leakage-free expanding-window model selection (DK1)")
+    axes[1].set_title("B. Synthetic expanding-window model selection (30 seeds)")
     axes[1].legend(frameon=False)
     fig.savefig(figures / "Figure_1_data_and_model_selection.png")
     fig.savefig(figures / "Figure_1_data_and_model_selection.pdf")
@@ -959,31 +1469,41 @@ def make_figures(
         capsize=3,
     )
     axes[0].axvline(0, color="black", lw=0.7)
-    axes[0].set_yticks(y, [s.replace(" finite-horizon ", "\n") for s in labels])
+    short_labels = {
+        POLICY_PRICE: "Price-only MDP",
+        POLICY_MPC: "SARX MPC",
+        POLICY_THRESHOLD: "Quantile threshold",
+        POLICY_IDLE: "Idle",
+    }
+    axes[0].set_yticks(y, [short_labels.get(s, s) for s in labels])
     axes[0].set_xlabel("Paired annualized difference (million)")
-    axes[0].set_title("A. Hour-aware advantage across seeds")
-    historical = real_metrics[
-        real_metrics["policy"].isin(order)
-    ].copy()
+    axes[0].set_title("A. Synthetic paired differences")
+    block_order = [
+        POLICY_BLOCK,
+        POLICY_BLOCK_PERSISTENCE,
+        POLICY_BLOCK_SEASONAL,
+        POLICY_IDLE,
+    ]
+    historical = real_metrics[real_metrics["policy"].isin(block_order)].copy()
     pivot = historical.pivot(
         index="policy", columns="case", values="annualized_adjusted_profit"
-    ).reindex(order)
+    ).reindex(block_order)
     width = 0.35
-    x = np.arange(len(order))
+    x = np.arange(len(block_order))
     for j, case in enumerate(pivot.columns):
         axes[1].bar(
             x + (j - 0.5) * width,
             pivot[case].to_numpy() / 1e6,
             width=width,
-            label=case,
+            label=case.replace(" day-ahead block", ""),
         )
     axes[1].set_xticks(
         x,
-        ["Hour\nMDP", "Price\nMDP", "Seasonal\nMPC", "Quantile\nrule", "Idle"],
+        ["SARX", "Prev.\nday", "Seasonal\nmean", "Idle"],
     )
-    axes[1].tick_params(axis="x", labelsize=7)
+    axes[1].tick_params(axis="x", labelsize=6.5)
     axes[1].set_ylabel("Annualized adjusted profit (million EUR)")
-    axes[1].set_title("B. Historical holdout results")
+    axes[1].set_title("B. Day-ahead block profit")
     axes[1].legend(frameon=False)
     fig.savefig(figures / "Figure_3_comparative_results.png")
     fig.savefig(figures / "Figure_3_comparative_results.pdf")
@@ -993,9 +1513,6 @@ def make_figures(
     fig, axes = plt.subplots(1, len(cases), figsize=(7.2, 3.2), constrained_layout=True)
     if len(cases) == 1:
         axes = [axes]
-    global_min = sensitivity["annualized_adjusted_profit"].min() / 1e6
-    global_max = sensitivity["annualized_adjusted_profit"].max() / 1e6
-    image = None
     for ax, case in zip(axes, cases):
         table = sensitivity[sensitivity["case"] == case].pivot(
             index="symmetric_efficiency",
@@ -1005,8 +1522,6 @@ def make_figures(
         image = ax.imshow(
             table.to_numpy() / 1e6,
             cmap="viridis",
-            vmin=global_min,
-            vmax=global_max,
             aspect="auto",
         )
         ax.set_xticks(range(len(table.columns)), [f"{x:g}" for x in table.columns])
@@ -1014,7 +1529,12 @@ def make_figures(
         ax.set_xlabel("Degradation cost (currency/MWh)")
         ax.set_ylabel("One-way efficiency")
         ax.set_title(case)
-    fig.colorbar(image, ax=axes, label="Annualized adjusted profit (million)", shrink=0.85)
+        fig.colorbar(
+            image,
+            ax=ax,
+            label="Annualized adjusted profit (million)",
+            shrink=0.82,
+        )
     fig.savefig(figures / "Figure_4_physical_sensitivity.png")
     fig.savefig(figures / "Figure_4_physical_sensitivity.pdf")
     plt.close(fig)
@@ -1035,6 +1555,45 @@ def make_figures(
     fig.savefig(figures / "Figure_5_discount_sensitivity.pdf")
     plt.close(fig)
 
+    fig, axes = plt.subplots(1, 2, figsize=(7.2, 3.5), constrained_layout=True)
+    forecast_plot = forecast_summary.copy()
+    methods = ["sarx", "persistence", "seasonal_mean"]
+    method_labels = ["SARX", "Previous day", "Seasonal mean"]
+    width = 0.35
+    x = np.arange(len(methods))
+    for j, case in enumerate(forecast_plot["case"].drop_duplicates()):
+        values = (
+            forecast_plot[forecast_plot["case"] == case]
+            .set_index("forecast_method")
+            .reindex(methods)["mean_absolute_error"]
+            .to_numpy()
+        )
+        axes[0].bar(x + (j - 0.5) * width, values, width=width, label=case)
+    axes[0].set_xticks(x, method_labels)
+    axes[0].set_ylabel("Mean absolute error (EUR/MWh)")
+    axes[0].set_title("A. Holdout forecast accuracy")
+    axes[0].legend(frameon=False)
+
+    models = list(degradation_sensitivity["degradation_model"].drop_duplicates())
+    labels = ["None", "Linear", "Nonlinear"]
+    x = np.arange(len(models))
+    for j, case in enumerate(degradation_sensitivity["case"].drop_duplicates()):
+        values = (
+            degradation_sensitivity[degradation_sensitivity["case"] == case]
+            .set_index("degradation_model")
+            .reindex(models)["annualized_adjusted_profit"]
+            .to_numpy()
+            / 1e6
+        )
+        axes[1].bar(x + (j - 0.5) * width, values, width=width, label=case)
+    axes[1].set_xticks(x, labels)
+    axes[1].set_ylabel("Annualized adjusted profit (million)")
+    axes[1].set_title("B. Dependence on degradation model")
+    axes[1].legend(frameon=False)
+    fig.savefig(figures / "Figure_6_forecast_and_degradation.png")
+    fig.savefig(figures / "Figure_6_forecast_and_degradation.pdf")
+    plt.close(fig)
+
 
 def run_benchmark(args: argparse.Namespace) -> dict[str, object]:
     output = Path(args.output_dir)
@@ -1044,6 +1603,10 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, object]:
         charge_efficiency=0.95,
         discharge_efficiency=0.95,
         degradation_cost_per_mwh=5.0,
+        nonlinear_degradation=True,
+        dod_stress_exponent=1.6,
+        linear_degradation_fraction=0.25,
+        soc_stress_cost_per_hour=1.0,
     )
     initial_soc = 200.0
 
@@ -1072,34 +1635,42 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, object]:
     synthetic_summary, paired = summarize_seed_results(synthetic_metrics)
 
     real_parts: list[pd.DataFrame] = []
+    forecast_summary_parts: list[pd.DataFrame] = []
+    forecast_detail_parts: list[pd.DataFrame] = []
     for case, frame in market_frames.items():
-        metrics, selection, diagnostic = evaluate_case(
-            frame, case, main_battery, candidates, initial_soc
+        metrics, forecast_summary, forecast_detail, diagnostic = evaluate_day_ahead_case(
+            frame, case, main_battery, initial_soc
         )
         real_parts.append(metrics)
-        selection_parts.append(selection)
+        forecast_summary_parts.append(forecast_summary)
+        forecast_detail_parts.append(forecast_detail)
         diagnostics.append(diagnostic)
-        selected_bins[case] = int(diagnostic["selected_bins"])
     real_metrics = pd.concat(real_parts, ignore_index=True)
+    historical_forecast_summary = pd.concat(
+        forecast_summary_parts, ignore_index=True
+    )
+    historical_forecast_detail = pd.concat(forecast_detail_parts, ignore_index=True)
     all_selections = pd.concat(selection_parts, ignore_index=True)
     diagnostic_frame = pd.DataFrame(diagnostics)
 
-    sensitivity_frames = {
-        "Synthetic seed 42": generate_synthetic_prices(
-            args.synthetic_hours, args.sensitivity_seed
-        ),
-        "DK1 historical": market_frames["DK1 historical"],
-    }
+    synthetic_sensitivity_frame = generate_synthetic_prices(
+        args.synthetic_hours, args.sensitivity_seed
+    )
     if "Synthetic seed 42" not in selected_bins:
-        train, _ = chronological_split(sensitivity_frames["Synthetic seed 42"])
+        train, _ = chronological_split(synthetic_sensitivity_frame)
         selected_bins["Synthetic seed 42"], _ = expanding_window_selection(
             train, candidates
         )
-    physical_sensitivity, gamma_sensitivity = sensitivity_analysis(
-        sensitivity_frames, selected_bins, initial_soc
+    physical_sensitivity, gamma_sensitivity, degradation_sensitivity = (
+        revision_sensitivity_analysis(
+            synthetic_sensitivity_frame,
+            selected_bins["Synthetic seed 42"],
+            market_frames["DK1 day-ahead block"],
+            initial_soc,
+        )
     )
     solver = solver_diagnostics(
-        sensitivity_frames["Synthetic seed 42"],
+        synthetic_sensitivity_frame,
         selected_bins["Synthetic seed 42"],
     )
 
@@ -1108,11 +1679,14 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, object]:
         "synthetic_summary.csv": synthetic_summary,
         "paired_seed_comparisons.csv": paired,
         "real_market_metrics.csv": real_metrics,
+        "historical_forecast_summary.csv": historical_forecast_summary,
+        "historical_forecast_detail.csv": historical_forecast_detail,
         "model_selection_folds.csv": all_selections,
         "case_diagnostics.csv": diagnostic_frame,
         "data_quality.csv": data_quality,
         "physical_sensitivity.csv": physical_sensitivity,
         "gamma_sensitivity.csv": gamma_sensitivity,
+        "degradation_model_sensitivity.csv": degradation_sensitivity,
         "solver_diagnostics.csv": solver,
     }
     for filename, table in outputs.items():
@@ -1125,22 +1699,39 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, object]:
         synthetic_summary,
         paired,
         real_metrics,
+        historical_forecast_summary,
         physical_sensitivity,
         gamma_sensitivity,
+        degradation_sensitivity,
     )
 
     manifest = {
         "repository_url": REPOSITORY_URL,
-        "study_type": "synthetic and historical benchmark; not a deployment study",
+        "study_type": (
+            "synthetic sequential benchmark and historical day-ahead block-"
+            "scheduling pilot; not a deployment or causal market study"
+        ),
         "synthetic_generator": "voltrl.generate_synthetic_prices",
         "synthetic_seeds": list(range(args.synthetic_seeds)),
         "synthetic_hours_per_seed": args.synthetic_hours,
         "chronological_train_fraction": 0.70,
         "model_selection": "three-fold expanding-window continuous predictive NLL",
+        "transition_smoothing": (
+            "empirical-marginal hierarchical Dirichlet prior, strength 12"
+        ),
         "candidate_bins": list(candidates),
         "main_battery": asdict(main_battery),
         "initial_soc_mwh": initial_soc,
         "primary_planner_discount": 1.0,
+        "historical_information_protocol": (
+            "one 24-hour price-independent quantity schedule fixed before each "
+            "UTC delivery day using training-fitted forecasts; actual clearing "
+            "prices used only for settlement"
+        ),
+        "historical_forecaster": (
+            "ridge seasonal autoregression with lags 1, 2, 24, 48, 168 and "
+            "daily, weekly, and annual Fourier terms"
+        ),
         "opsd_source": {
             "package": "Open Power System Data, Time series, version 2020-10-06",
             "doi": "10.25832/time_series/2020-10-06",
@@ -1161,6 +1752,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, object]:
             "figures/Figure_3_comparative_results.png",
             "figures/Figure_4_physical_sensitivity.png",
             "figures/Figure_5_discount_sensitivity.png",
+            "figures/Figure_6_forecast_and_degradation.png",
         ],
     }
     (output / "experiment_manifest.json").write_text(
@@ -1172,11 +1764,11 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, object]:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--opsd-csv", required=True)
-    parser.add_argument("--output-dir", default="results_revision")
+    parser.add_argument("--output-dir", default="results_revision2")
     parser.add_argument("--synthetic-seeds", type=int, default=30)
     parser.add_argument("--synthetic-hours", type=int, default=17_520)
     parser.add_argument("--sensitivity-seed", type=int, default=42)
-    parser.add_argument("--candidates", default="4,6,8,10,12")
+    parser.add_argument("--candidates", default="4,6,8,10,12,16,20,24,32,40,48")
     return parser
 
 

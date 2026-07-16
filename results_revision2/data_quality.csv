@@ -1,0 +1,3 @@
+case,source_column,start,end,hours,interpolated_hours,interpolated_percent
+DK1 day-ahead block,DK_1_price_day_ahead,2015-01-01 01:00:00+00:00,2020-09-30 22:00:00+00:00,50398,12,0.023810468669391644
+DK2 day-ahead block,DK_2_price_day_ahead,2015-01-01 01:00:00+00:00,2020-09-30 22:00:00+00:00,50398,12,0.023810468669391644

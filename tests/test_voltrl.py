@@ -89,6 +89,34 @@ class VoltRLTests(unittest.TestCase):
             metrics["perfect_foresight_inventory_adjusted_profit"] + 1e-8,
         )
 
+    def test_nonlinear_degradation_penalizes_deep_discharge(self):
+        battery = BatterySpec(
+            degradation_cost_per_mwh=5.0,
+            nonlinear_degradation=True,
+            dod_stress_exponent=1.6,
+            linear_degradation_fraction=0.25,
+        )
+        shallow = battery.degradation_cost(Action.DISCHARGE, 500.0)
+        deep = battery.degradation_cost(Action.DISCHARGE, 100.0)
+        self.assertGreater(deep, shallow)
+
+    def test_nonlinear_full_cycle_matches_nominal_linear_cost(self):
+        battery = BatterySpec(
+            degradation_cost_per_mwh=5.0,
+            nonlinear_degradation=True,
+            dod_stress_exponent=1.6,
+            linear_degradation_fraction=0.25,
+        )
+        total = 0.0
+        soc = 0.0
+        for _ in range(5):
+            total += battery.degradation_cost(Action.CHARGE, soc)
+            soc += 100.0
+        for _ in range(5):
+            total += battery.degradation_cost(Action.DISCHARGE, soc)
+            soc -= 100.0
+        self.assertAlmostEqual(total, 2.0 * 500.0 * 5.0, places=8)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,29 +1,35 @@
 # VoltRL: Audit-Ready Battery-Arbitrage Benchmark
 
-VoltRL is a research benchmark for testing finite-state battery-arbitrage
-policies under chronologically revealed hourly prices. The revised study is
-explicitly a **benchmark, not a deployment or market-bidding study**. It
-compares a price-only finite-horizon MDP with an hour-aware state model, a
-causal seasonal model-predictive controller, a training-quantile threshold
-rule, an idle controller, and a perfect-foresight diagnostic upper bound.
+VoltRL is a research benchmark for finite-state battery-arbitrage control under
+two explicit information protocols. Synthetic prices are revealed sequentially
+and support a price-only versus price-plus-hour state ablation. Historical DK1
+and DK2 day-ahead prices are evaluated using one 24-hour schedule fixed before
+each delivery day; realized prices are used only for settlement. VoltRL is a
+**benchmark, not a deployment or live bidding system**.
 
 Public repository: <https://github.com/mohammadrezwankhan/voltrl>
 
-## What changed in the revision
+## What changed in revision 2
 
 - Three-fold expanding-window model selection replaces the invalid BIC-like
   criterion in the original illustrative script.
-- Candidate models are scored by a continuous Gaussian-mixture next-price
+- Candidate resolutions `4,6,8,10,12,16,20,24,32,40,48` are scored by a continuous Gaussian-mixture next-price
   density with full real-line support, so holdout tail values are valid.
+- Hierarchical empirical-marginal Dirichlet smoothing (strength 12) supports
+  the expanded state-resolution search; the selected values are interior.
 - The primary planner and evaluation now use the same undiscounted finite-
   horizon objective and terminal-inventory valuation.
 - The exogenous state can include current UTC hour, addressing the known
   seasonal misspecification of a price-only Markov state.
 - Thirty independently regenerated synthetic datasets propagate generator,
   fitting, model-selection, and evaluation variability.
-- DK1 and DK2 historical day-ahead prices from Open Power System Data version
-  2020-10-06 provide external pilot evidence (DOI:
-  `10.25832/time_series/2020-10-06`).
+- A ridge seasonal autoregression using price lags and daily, weekly, and annual
+  harmonics replaces the training-hourly-mean MPC forecast.
+- DK1 and DK2 use a day-ahead block protocol that prevents same-day realized
+  prices from changing an already committed schedule.
+- The primary reward replaces a purely linear throughput proxy with a
+  normalized nonlinear DOD potential plus quadratic SOC stress. No-cost,
+  linear, and nonlinear models are compared explicitly.
 - Physical and planner sensitivities cover one-way efficiency
   `{0.90, 0.95, 1.00}`, degradation cost `{0, 5, 15}`, and planner discount
   `{0.95, 0.99, 1.00}`.
@@ -50,42 +56,42 @@ SHA-256 checksum are recorded in [`data/README.md`](data/README.md).
 ```powershell
 python voltrl_benchmark.py `
   --opsd-csv data\opsd_time_series_60min_singleindex_2020-10-06.csv `
-  --output-dir results_revision `
+  --output-dir results_revision2 `
   --synthetic-seeds 30 `
   --synthetic-hours 17520 `
-  --candidates 4,6,8,10,12
+  --candidates 4,6,8,10,12,16,20,24,32,40,48
 
 python -m unittest discover -s tests -v
 ```
 
-The common candidate range is deliberately capped at 12 bins: for the
-two-year synthetic training segments this retains at least 42 observations on
-average per hour-price source state. The cap controls transition sparsity and
-is therefore part of the prespecified benchmark, not a claim that 12 is a
-globally optimal discretization.
+The upper resolution is 48 rather than 12. Transition rows use hierarchical
+smoothing, and the selection audit verifies that the optimum is not the upper
+candidate.
 
 ## Main conventions
 
 - Battery: 500 MWh capacity and 100 MW one-hour charge/discharge step.
 - Main one-way charge/discharge efficiency: 0.95 (90.25% round trip).
-- Main degradation proxy: 5 currency units per internal MWh moved.
+- Main aging cost: 5 currency units/MWh nominal full-cycle normalization, 25%
+  linear throughput component, DOD exponent 1.6, and quadratic SOC stress.
 - SOC grid: 0, 100, 200, 300, 400, and 500 MWh.
 - Chronological split: first 70% training/development, final 30% untouched
   holdout.
 - Primary planner discount: 1.0; terminal SOC is valued at the training-median
   price with discharge efficiency applied.
-- The historical day-ahead series are evaluated as sequentially revealed
-  benchmark signals. Results do not represent executable bidding revenue.
+- Historical actions are fixed as a complete 24-hour vector before the
+  delivery day. The price-taking abstraction assumes accepted fixed quantities
+  and still omits bid curves, fees, imbalance, and market impact.
 - Perfect foresight is a diagnostic upper bound and is never available to any
   causal policy.
 
 ## Outputs
 
-`results_revision/` contains seed-level metrics, paired bootstrap summaries,
-historical results, model-selection folds, state-prediction diagnostics,
-sensitivity tables, solver checks, a machine-readable manifest, and figures
-in PNG/PDF. The original `voltrl.py` remains as the reusable finite-MDP engine;
-publication claims are based on `voltrl_benchmark.py` and `results_revision/`.
+`results_revision2/` contains seed-level metrics, paired bootstrap summaries,
+block-schedule historical results, forecast errors, model-selection folds,
+aging and physical sensitivities, solver checks, a machine-readable manifest,
+and PNG/PDF figures. Publication claims are based on `voltrl_benchmark.py` and
+`results_revision2/`.
 
 ## License
 

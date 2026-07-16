@@ -1,0 +1,5 @@
+comparison,seeds,mean_paired_difference,bootstrap_ci95_lower,bootstrap_ci95_upper,positive_seed_fraction
+Hour-aware finite-horizon MDP minus Price-only finite-horizon MDP,30,793114.1352083123,742928.5368453762,843350.0251010497,1.0
+Hour-aware finite-horizon MDP minus Seasonal autoregressive 24-hour MPC,30,-513411.9510244652,-564458.0215343852,-462002.09965630004,0.0
+Hour-aware finite-horizon MDP minus Training-quantile threshold,30,873184.8304295231,822701.5069964371,927565.6246196787,1.0
+Hour-aware finite-horizon MDP minus Idle,30,4620450.202547204,4516315.736556942,4729829.98644739,1.0

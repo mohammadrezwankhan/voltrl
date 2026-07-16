@@ -58,6 +58,10 @@ class BatterySpec:
     charge_efficiency: float = 1.0
     discharge_efficiency: float = 1.0
     degradation_cost_per_mwh: float = 0.0
+    nonlinear_degradation: bool = False
+    dod_stress_exponent: float = 1.6
+    linear_degradation_fraction: float = 0.25
+    soc_stress_cost_per_hour: float = 0.0
 
     def __post_init__(self) -> None:
         if self.capacity_mwh <= 0 or self.max_power_mw <= 0:
@@ -70,6 +74,12 @@ class BatterySpec:
             raise ValueError("Discharge efficiency must lie in (0, 1].")
         if self.degradation_cost_per_mwh < 0:
             raise ValueError("Degradation cost cannot be negative.")
+        if self.dod_stress_exponent < 1.0:
+            raise ValueError("The DOD stress exponent must be at least one.")
+        if not 0.0 <= self.linear_degradation_fraction <= 1.0:
+            raise ValueError("The linear degradation fraction must lie in [0, 1].")
+        if self.soc_stress_cost_per_hour < 0:
+            raise ValueError("The SOC stress cost cannot be negative.")
         ratio = self.capacity_mwh / self.energy_step_mwh
         if not math.isclose(ratio, round(ratio), rel_tol=0.0, abs_tol=1e-10):
             raise ValueError(
@@ -93,18 +103,88 @@ class BatterySpec:
             return -self.energy_step_mwh
         return 0.0
 
-    def realized_reward(self, price: float, action: int | Action) -> float:
+    def degradation_cost(
+        self, action: int | Action, soc_before_mwh: float | None = None
+    ) -> float:
+        """Return the stage degradation cost.
+
+        The legacy model is linear in internal energy throughput.  The revised
+        model retains a small linear component and adds a convex cumulative
+        depth-of-discharge (DOD) potential on discharge plus an hourly extreme-
+        SOC stress term.  The DOD potential is normalized so a full 0-100-0%
+        cycle has the same nominal cost as the legacy linear proxy, while
+        shallow cycles are cheaper and deeper excursions are progressively
+        more expensive.
+        """
+
+        delta = self.soc_delta(action)
+        if not self.nonlinear_degradation:
+            return float(self.degradation_cost_per_mwh * abs(delta))
+        if soc_before_mwh is None:
+            raise ValueError(
+                "soc_before_mwh is required for nonlinear degradation."
+            )
+        if not -1e-10 <= soc_before_mwh <= self.capacity_mwh + 1e-10:
+            raise ValueError("soc_before_mwh lies outside the battery capacity.")
+        soc_after = soc_before_mwh + delta
+        if not -1e-10 <= soc_after <= self.capacity_mwh + 1e-10:
+            raise ValueError("The requested action is infeasible at this SOC.")
+
+        linear = (
+            self.linear_degradation_fraction
+            * self.degradation_cost_per_mwh
+            * abs(delta)
+        )
+        depth_cost = 0.0
+        if delta < 0.0:
+            dod_before = 1.0 - soc_before_mwh / self.capacity_mwh
+            dod_after = 1.0 - soc_after / self.capacity_mwh
+            depth_scale = (
+                (1.0 - self.linear_degradation_fraction)
+                * 2.0
+                * self.degradation_cost_per_mwh
+                * self.capacity_mwh
+            )
+            depth_cost = depth_scale * (
+                dod_after**self.dod_stress_exponent
+                - dod_before**self.dod_stress_exponent
+            )
+        normalized_distance = (soc_after / self.capacity_mwh - 0.5) / 0.5
+        storage_stress = (
+            self.soc_stress_cost_per_hour
+            * self.interval_hours
+            * normalized_distance**2
+        )
+        return float(linear + max(depth_cost, 0.0) + storage_stress)
+
+    def reward_components(
+        self,
+        price: float,
+        action: int | Action,
+        soc_before_mwh: float | None = None,
+    ) -> tuple[float, float, float]:
+        """Return energy-market cash flow, degradation cost, and net reward."""
+
+        delta = self.soc_delta(action)
+        grid_purchase = max(delta, 0.0) / self.charge_efficiency
+        grid_sale = max(-delta, 0.0) * self.discharge_efficiency
+        energy_cash_flow = float(price * (grid_sale - grid_purchase))
+        degradation = self.degradation_cost(action, soc_before_mwh)
+        return energy_cash_flow, degradation, energy_cash_flow - degradation
+
+    def realized_reward(
+        self,
+        price: float,
+        action: int | Action,
+        soc_before_mwh: float | None = None,
+    ) -> float:
         """One-hour cash flow in currency units.
 
         Positive SOC movement requires grid purchases of ``delta / eta_c``;
         negative movement sells ``-delta * eta_d`` to the grid.
         """
 
-        delta = self.soc_delta(action)
-        grid_purchase = max(delta, 0.0) / self.charge_efficiency
-        grid_sale = max(-delta, 0.0) * self.discharge_efficiency
-        throughput_cost = self.degradation_cost_per_mwh * abs(delta)
-        return float(price * (grid_sale - grid_purchase) - throughput_cost)
+        return self.reward_components(price, action, soc_before_mwh)[2]
 
 
 @dataclass(frozen=True)
@@ -351,7 +431,7 @@ class BatteryArbitrageMDP:
                         price_i
                     ]
                     reward[state, int(action)] = battery.realized_reward(
-                        representative, action
+                        representative, action, float(soc)
                     )
                     valid[state, int(action)] = True
 
@@ -528,7 +608,9 @@ def simulate_policy(
         if not mdp.valid_actions[state, action]:
             raise AssertionError("The learned policy selected an infeasible action.")
         soc_before = float(mdp.soc_levels[soc_i])
-        reward = mdp.battery.realized_reward(float(price), action)
+        energy_cash, degradation_cost, reward = mdp.battery.reward_components(
+            float(price), action, soc_before
+        )
         next_soc = soc_before + mdp.battery.soc_delta(action)
         soc_i = int(round(next_soc / mdp.battery.energy_step_mwh))
         cumulative += reward
@@ -541,6 +623,8 @@ def simulate_policy(
                 "soc_before_mwh": soc_before,
                 "action": ACTION_NAMES[action],
                 "soc_after_mwh": float(next_soc),
+                "energy_cash_flow": float(energy_cash),
+                "degradation_cost": float(degradation_cost),
                 "profit": float(reward),
                 "cumulative_profit": float(cumulative),
             }
@@ -577,7 +661,9 @@ def perfect_foresight_dispatch(
                 if not (-1e-10 <= next_soc <= battery.capacity_mwh + 1e-10):
                     continue
                 next_i = int(round(next_soc / battery.energy_step_mwh))
-                candidate = battery.realized_reward(float(x[t]), action) + values_next[next_i]
+                candidate = battery.realized_reward(
+                    float(x[t]), action, float(soc)
+                ) + values_next[next_i]
                 if candidate > best_value + 1e-12:
                     best_value = candidate
                     best_action = int(action)
@@ -592,7 +678,9 @@ def perfect_foresight_dispatch(
     for t, (timestamp, price) in enumerate(zip(timestamps, x)):
         action = int(decisions[t, soc_i])
         soc_before = float(soc_levels[soc_i])
-        reward = battery.realized_reward(float(price), action)
+        energy_cash, degradation_cost, reward = battery.reward_components(
+            float(price), action, soc_before
+        )
         next_soc = soc_before + battery.soc_delta(action)
         soc_i = int(round(next_soc / battery.energy_step_mwh))
         cumulative += reward
@@ -604,6 +692,8 @@ def perfect_foresight_dispatch(
                 "soc_before_mwh": soc_before,
                 "action": ACTION_NAMES[action],
                 "soc_after_mwh": float(next_soc),
+                "energy_cash_flow": float(energy_cash),
+                "degradation_cost": float(degradation_cost),
                 "profit": float(reward),
                 "cumulative_profit": float(cumulative),
             }
