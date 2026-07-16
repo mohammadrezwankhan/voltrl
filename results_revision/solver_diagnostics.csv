@@ -1,0 +1,3 @@
+gamma,value_iteration_converged,value_iteration_iterations,policy_iteration_converged,policy_iteration_iterations,policy_agreement_fraction,maximum_value_difference,vi_bellman_residual,pi_bellman_residual
+0.95,True,511,True,4,1.0,1.83063093572855e-08,9.240466170012951e-10,1.0913936421275139e-11
+0.99,True,2644,True,6,1.0,9.808718459680676e-08,9.89530235528946e-10,2.1827872842550278e-11

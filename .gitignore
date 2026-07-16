@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+.venv/
+venv/
+
+# The versioned OPSD source is downloaded separately because it exceeds
+# GitHub's per-file limit. See data/README.md for provenance and checksum.
+data/*.csv
+
+# Local build and submission artifacts
+.qa/
+.runtime_deps/
+*.docx
+*.zip
