@@ -1,5 +1,7 @@
 # VoltRL: Audit-Ready Battery-Arbitrage Benchmark
 
+[![Python validation](https://github.com/mohammadrezwankhan/voltrl/actions/workflows/python-validation.yml/badge.svg)](https://github.com/mohammadrezwankhan/voltrl/actions/workflows/python-validation.yml)
+
 VoltRL is a research benchmark for finite-state battery-arbitrage control under
 two explicit information protocols. Synthetic prices are revealed sequentially
 and support a price-only versus price-plus-hour state ablation. Historical DK1
@@ -13,8 +15,9 @@ Public repository: <https://github.com/mohammadrezwankhan/voltrl>
 
 - Three-fold expanding-window model selection replaces the invalid BIC-like
   criterion in the original illustrative script.
-- Candidate resolutions `4,6,8,10,12,16,20,24,32,40,48` are scored by a continuous Gaussian-mixture next-price
-  density with full real-line support, so holdout tail values are valid.
+- Candidate resolutions `4,6,8,10,12,16,20,24,32,40,48` are scored by a
+  continuous Gaussian-mixture next-price density with full real-line support,
+  so holdout tail values are valid.
 - Hierarchical empirical-marginal Dirichlet smoothing (strength 12) supports
   the expanded state-resolution search; the selected values are interior.
 - The primary planner and evaluation now use the same undiscounted finite-
@@ -41,6 +44,9 @@ Python 3.12 is recommended. Install the exact tested dependencies:
 ```powershell
 python -m pip install -r requirements.txt
 ```
+
+Continuous integration installs the same pinned environment and runs all unit
+tests whenever Python sources or dependencies change.
 
 ## Historical data
 
