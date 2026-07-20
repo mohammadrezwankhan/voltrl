@@ -59,6 +59,7 @@
     "doi": "10.25832/time_series/2020-10-06",
     "url": "https://data.open-power-system-data.org/time_series/2020-10-06/",
     "file": "opsd_time_series_60min_singleindex_2020-10-06.csv",
+    "sha256": "6a7f2bc571314cbf9c321cc03437691cd4be95c3a6f075e60ff99e8035c704c8",
     "markets": [
       "DK_1_price_day_ahead",
       "DK_2_price_day_ahead"

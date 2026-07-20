@@ -28,6 +28,7 @@ import numpy as np
 import pandas as pd
 
 from artifact_integrity import build_artifact_inventory
+from input_provenance import DEFAULT_SOURCE_RECORD, verify_source_file
 from voltrl import (
     ACTION_NAMES,
     Action,
@@ -1623,7 +1624,10 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, object]:
     )
     initial_soc = 200.0
 
-    market_frames, data_quality = load_opsd_markets(Path(args.opsd_csv))
+    source_verification = verify_source_file(
+        Path(args.opsd_csv), Path(args.opsd_provenance)
+    )
+    market_frames, data_quality = load_opsd_markets(source_verification.path)
     synthetic_metrics_parts: list[pd.DataFrame] = []
     selection_parts: list[pd.DataFrame] = []
     diagnostics: list[dict[str, object]] = []
@@ -1746,10 +1750,15 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, object]:
             "daily, weekly, and annual Fourier terms"
         ),
         "opsd_source": {
-            "package": "Open Power System Data, Time series, version 2020-10-06",
-            "doi": "10.25832/time_series/2020-10-06",
-            "url": "https://data.open-power-system-data.org/time_series/2020-10-06/",
-            "file": Path(args.opsd_csv).name,
+            "package": (
+                f"{source_verification.dataset}, version {source_verification.version}"
+            ),
+            "doi": source_verification.doi,
+            "url": source_verification.url,
+            "file": source_verification.path.name,
+            "bytes": source_verification.bytes,
+            "sha256": source_verification.sha256,
+            "provenance_record": Path(args.opsd_provenance).name,
             "markets": ["DK_1_price_day_ahead", "DK_2_price_day_ahead"],
         },
         "runtime": {
@@ -1773,6 +1782,12 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, object]:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--opsd-csv", required=True)
+    parser.add_argument(
+        "--opsd-provenance",
+        type=Path,
+        default=DEFAULT_SOURCE_RECORD,
+        help="OPSD source record used to verify the CSV before loading",
+    )
     parser.add_argument("--output-dir", default="results_revision2")
     parser.add_argument("--synthetic-seeds", type=int, default=30)
     parser.add_argument("--synthetic-hours", type=int, default=17_520)
