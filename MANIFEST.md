@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD013 -->
+
 # VoltRL revision 2 submission manifest
 
 ## Publication deliverables
@@ -10,7 +12,11 @@
 
 - `voltrl.py` — finite battery model, nonlinear DOD/SOC aging cost, solvers, simulation, and perfect-foresight diagnostic.
 - `voltrl_benchmark.py` — synthetic state ablation, expanded training-only resolution selection, SARX forecasting, historical 24-hour block scheduling, uncertainty, sensitivity, and figures.
-- `tests/` — 13 deterministic tests, including forecast causality, same-day block commitment, nonlinear full-cycle normalization, SOC feasibility, and oracle dominance.
+- `artifact_integrity.py` — records and verifies byte sizes and SHA-256 digests
+  for every declared result artifact.
+- `tests/` — 18 deterministic tests, including forecast causality, same-day
+  block commitment, artifact tampering, path safety, nonlinear full-cycle
+  normalization, SOC feasibility, and oracle dominance.
 - `requirements.txt`, `LICENSE`, `CITATION.cff`, and `README.md` — pinned environment, license, citation metadata, and reproduction instructions.
 
 ## Results
@@ -22,8 +28,8 @@
 - DK1/DK2 block-schedule metrics and data-quality disclosure;
 - day-ahead forecast-detail and forecast-summary tables;
 - physical, planner-discount, and degradation-model sensitivities;
-- solver diagnostics and `experiment_manifest.json`;
-- six result figures in PNG and PDF.
+- solver diagnostics and an integrity-verifiable `experiment_manifest.json`;
+- six result figures in PNG and PDF, with both formats declared in the manifest.
 
 The 124 MB OPSD source CSV is not duplicated in the public repository or final archive. Its official version, DOI `10.25832/time_series/2020-10-06`, local SHA-256, and reproduction instructions are recorded under `data/`.
 
@@ -40,4 +46,3 @@ The 124 MB OPSD source CSV is not duplicated in the public repository or final a
 Repository: <https://github.com/mohammadrezwankhan/voltrl>
 
 Revision 2 is released as `v1.1.0`; the exact commit is recorded in the final manuscript, reviewer response, and archive after publication of the synchronized artifacts.
-

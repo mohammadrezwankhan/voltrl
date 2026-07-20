@@ -27,6 +27,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from artifact_integrity import build_artifact_inventory
 from voltrl import (
     ACTION_NAMES,
     Action,
@@ -53,6 +54,18 @@ POLICY_BLOCK = "SARX day-ahead block DP"
 POLICY_BLOCK_SEASONAL = "Seasonal-mean day-ahead block DP"
 POLICY_BLOCK_PERSISTENCE = "Previous-day persistence block DP"
 REPOSITORY_URL = "https://github.com/mohammadrezwankhan/voltrl"
+FIGURE_OUTPUTS = [
+    f"figures/Figure_{number}_{name}.{extension}"
+    for number, name in (
+        (1, "data_and_model_selection"),
+        (2, "synthetic_baselines"),
+        (3, "comparative_results"),
+        (4, "physical_sensitivity"),
+        (5, "discount_sensitivity"),
+        (6, "forecast_and_degradation"),
+    )
+    for extension in ("png", "pdf")
+]
 ACTION_TIE_ORDER = np.array(
     [int(Action.IDLE), int(Action.CHARGE), int(Action.DISCHARGE)], dtype=int
 )
@@ -1746,17 +1759,13 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, object]:
             "pandas": pd.__version__,
             "matplotlib": matplotlib.__version__,
         },
-        "outputs": list(outputs) + [
-            "figures/Figure_1_data_and_model_selection.png",
-            "figures/Figure_2_synthetic_baselines.png",
-            "figures/Figure_3_comparative_results.png",
-            "figures/Figure_4_physical_sensitivity.png",
-            "figures/Figure_5_discount_sensitivity.png",
-            "figures/Figure_6_forecast_and_degradation.png",
-        ],
+        "outputs": list(outputs) + FIGURE_OUTPUTS,
     }
+    manifest["artifact_inventory"] = build_artifact_inventory(
+        output, manifest["outputs"]
+    )
     (output / "experiment_manifest.json").write_text(
-        json.dumps(manifest, indent=2), encoding="utf-8"
+        json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
     )
     return manifest
 
