@@ -55,11 +55,16 @@ Download `time_series_60min_singleindex.csv` from the official
 The pipeline reads `DK_1_price_day_ahead` and `DK_2_price_day_ahead`. Twelve
 internal missing hours per zone (0.024%, spring clock changes) are linearly
 interpolated and reported in `data_quality.csv`. The exact local filename and
-SHA-256 checksum are recorded in [`data/README.md`](data/README.md).
+SHA-256 checksum are recorded in [`data/README.md`](data/README.md) and the
+machine-readable [`data/opsd_source.json`](data/opsd_source.json). The benchmark
+verifies the source filename and checksum before parsing any market data.
 
 ## Reproduce the revised benchmark
 
 ```powershell
+python input_provenance.py `
+  data\opsd_time_series_60min_singleindex_2020-10-06.csv
+
 python voltrl_benchmark.py `
   --opsd-csv data\opsd_time_series_60min_singleindex_2020-10-06.csv `
   --output-dir results_revision2 `
@@ -100,9 +105,9 @@ aging and physical sensitivities, solver checks, a machine-readable manifest,
 and PNG/PDF figures. Publication claims are based on `voltrl_benchmark.py` and
 `results_revision2/`.
 
-The manifest declares every CSV and PNG/PDF figure with its byte size and
-SHA-256 digest. Run the artifact verifier after downloading, copying, or
-archiving the results:
+The manifest records the verified source digest and byte count, then declares
+every CSV and PNG/PDF figure with its byte size and SHA-256 digest. Run the
+artifact verifier after downloading, copying, or archiving the results:
 
 ```powershell
 python artifact_integrity.py results_revision2\experiment_manifest.json
