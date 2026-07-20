@@ -29,6 +29,8 @@
 - day-ahead forecast-detail and forecast-summary tables;
 - physical, planner-discount, and degradation-model sensitivities;
 - solver diagnostics and an integrity-verifiable `experiment_manifest.json`;
+- mandatory OPSD input verification using `input_provenance.py` and the
+  machine-readable `data/opsd_source.json` record;
 - six result figures in PNG and PDF, with both formats declared in the manifest.
 
 The 124 MB OPSD source CSV is not duplicated in the public repository or final archive. Its official version, DOI `10.25832/time_series/2020-10-06`, local SHA-256, and reproduction instructions are recorded under `data/`.

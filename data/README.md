@@ -11,11 +11,15 @@ version 2020-10-06**.
 
 The CSV is not stored in this repository because its size exceeds GitHub's
 per-file limit. Download it from the official versioned package, place it in
-this directory, and verify the checksum before running the benchmark.
+this directory, and verify the checksum before running the benchmark. The same
+metadata is available to tools in [`opsd_source.json`](opsd_source.json).
 
-PowerShell verification:
+Cross-platform verification:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 `
+python input_provenance.py `
   data\opsd_time_series_60min_singleindex_2020-10-06.csv
 ```
+
+`voltrl_benchmark.py` performs this verification automatically and stops before
+loading the CSV if its filename or content does not match the source record.
