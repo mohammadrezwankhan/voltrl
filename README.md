@@ -68,6 +68,7 @@ python voltrl_benchmark.py `
   --candidates 4,6,8,10,12,16,20,24,32,40,48
 
 python -m unittest discover -s tests -v
+python artifact_integrity.py results_revision2\experiment_manifest.json
 ```
 
 The upper resolution is 48 rather than 12. Transition rows use hierarchical
@@ -98,6 +99,17 @@ block-schedule historical results, forecast errors, model-selection folds,
 aging and physical sensitivities, solver checks, a machine-readable manifest,
 and PNG/PDF figures. Publication claims are based on `voltrl_benchmark.py` and
 `results_revision2/`.
+
+The manifest declares every CSV and PNG/PDF figure with its byte size and
+SHA-256 digest. Run the artifact verifier after downloading, copying, or
+archiving the results:
+
+```powershell
+python artifact_integrity.py results_revision2\experiment_manifest.json
+```
+
+The command exits nonzero when a declared artifact is missing, unrecorded,
+resized, or has different content.
 
 ## License
 
