@@ -23,6 +23,7 @@ class ResultBundleAuditTests(unittest.TestCase):
         self.assertTrue(report.passed)
         statuses = {check.name: check.status for check in report.checks}
         self.assertEqual(statuses["experiment_contract"], "passed")
+        self.assertEqual(statuses["synthetic_statistics_contract"], "passed")
         self.assertEqual(statuses["artifact_integrity"], "passed")
         self.assertEqual(statuses["software_provenance"], "passed")
         self.assertEqual(statuses["historical_forecast_contract"], "skipped")
@@ -33,7 +34,7 @@ class ResultBundleAuditTests(unittest.TestCase):
         )
 
         self.assertTrue(report.passed)
-        self.assertEqual(len(report.checks), 4)
+        self.assertEqual(len(report.checks), 5)
         self.assertTrue(all(check.status == "passed" for check in report.checks))
 
     def test_historical_audit_requires_forecast_specific_declaration(self) -> None:
@@ -93,7 +94,7 @@ class ResultBundleAuditTests(unittest.TestCase):
         payload = json.loads(stdout.getvalue())
         self.assertEqual(exit_code, 0)
         self.assertTrue(payload["passed"])
-        self.assertEqual(len(payload["checks"]), 4)
+        self.assertEqual(len(payload["checks"]), 5)
 
     def test_invalid_manifest_returns_nonzero_json_error(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
