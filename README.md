@@ -74,6 +74,7 @@ python voltrl_benchmark.py `
 
 python -m unittest discover -s tests -v
 python experiment_contract.py results_revision2\experiment_manifest.json
+python historical_forecast_contract.py results_revision2\experiment_manifest.json
 python artifact_integrity.py results_revision2\experiment_manifest.json
 ```
 
@@ -112,22 +113,27 @@ then declares every CSV and PNG/PDF figure with its byte size and SHA-256
 digest. The experiment contract independently checks that manifest physics and
 study settings agree with synthetic seed coverage, policy rows, the complete
 candidate/fold grid, selected-bin diagnostics, chronological split sizes, and
-reported sample counts. Run all three result verifiers after cloning,
-downloading, copying, or archiving the results:
+reported sample counts. The historical forecast contract then reconstructs
+forecast errors and summary metrics from all timestamped rows, checks that each
+24-hour block uses only information available before delivery, and confirms
+that methods share the same realized prices and test horizon. Run all four
+result verifiers after cloning, downloading, copying, or archiving the results:
 
 ```powershell
 python experiment_contract.py results_revision2\experiment_manifest.json
+python historical_forecast_contract.py results_revision2\experiment_manifest.json
 python artifact_integrity.py results_revision2\experiment_manifest.json
 python software_provenance.py results_revision2\experiment_manifest.json
 ```
 
-The commands exit nonzero when configuration and result-table coverage drift,
-when a declared artifact is missing, unrecorded, resized, or changed, or when
-the recorded historical source snapshot is absent or does not match its byte
-sizes and SHA-256 digests. Clean runs are verified against immutable Git
-objects; runs made from uncommitted code record and check the exact working-tree
-bytes instead. CSV files are canonicalized to LF before hashing so the same
-table verifies on Windows and Linux; PNG and PDF artifacts remain byte-exact.
+The commands exit nonzero when configuration, forecast timing, recomputed
+metrics, or result-table coverage drift; when a declared artifact is missing,
+unrecorded, resized, or changed; or when the recorded historical source
+snapshot is absent or does not match its byte sizes and SHA-256 digests. Clean
+runs are verified against immutable Git objects; runs made from uncommitted
+code record and check the exact working-tree bytes instead. CSV files are
+canonicalized to LF before hashing so the same table verifies on Windows and
+Linux; PNG and PDF artifacts remain byte-exact.
 
 ## License
 
