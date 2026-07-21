@@ -20,10 +20,12 @@
   coverage in the published result tables.
 - `software_provenance.py` — binds each result manifest to a clean historical
   Git commit or the exact bytes of an uncommitted source snapshot.
+- `result_bundle_audit.py` — runs every verifier applicable to a result bundle
+  and emits either a readable check summary or structured JSON.
 - `tests/` — deterministic tests covering forecast causality, same-day block
   commitment, artifact and source tampering, historical commit verification,
-  path safety, nonlinear full-cycle normalization, SOC feasibility, and oracle
-  dominance.
+  aggregate audit reporting, path safety, nonlinear full-cycle normalization,
+  SOC feasibility, and oracle dominance.
 - `requirements.txt`, `LICENSE`, `CITATION.cff`, and `README.md` — pinned environment, license, citation metadata, and reproduction instructions.
 
 ## Results
