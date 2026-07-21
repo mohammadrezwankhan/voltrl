@@ -7,7 +7,7 @@ on:
       - "**/*.py"
       - ".gitattributes"
       - "data/*.json"
-      - "results_*/experiment_manifest.json"
+      - "results_*/**"
       - "requirements.txt"
       - ".github/workflows/python-validation.yml"
   push:
@@ -17,7 +17,7 @@ on:
       - "**/*.py"
       - ".gitattributes"
       - "data/*.json"
-      - "results_*/experiment_manifest.json"
+      - "results_*/**"
       - "requirements.txt"
       - ".github/workflows/python-validation.yml"
 
@@ -52,6 +52,11 @@ jobs:
 
       - name: Run unit tests
         run: python -m unittest discover -s tests -v
+
+      - name: Verify experiment result contracts
+        run: |
+          python experiment_contract.py results_revision/experiment_manifest.json
+          python experiment_contract.py results_revision2/experiment_manifest.json
 
       - name: Verify published result bundles
         run: |
