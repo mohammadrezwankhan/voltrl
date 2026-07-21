@@ -111,7 +111,11 @@ then declares every CSV and PNG/PDF figure with its byte size and SHA-256
 digest. The experiment contract independently checks that manifest physics and
 study settings agree with synthetic seed coverage, policy rows, the complete
 candidate/fold grid, selected-bin diagnostics, chronological split sizes, and
-reported sample counts. The historical forecast contract then reconstructs
+reported sample counts. The synthetic statistics contract recomputes every
+policy mean, sample standard deviation, mean oracle efficiency, paired mean,
+positive-seed fraction, and annualized seed result from the underlying rows;
+it also checks confidence-interval ordering and coverage of each reported mean.
+The historical forecast contract then reconstructs
 forecast errors and summary metrics from all timestamped rows, checks that each
 24-hour block uses only information available before delivery, and confirms
 that methods share the same realized prices and test horizon. Run the complete
@@ -123,7 +127,7 @@ python result_bundle_audit.py results_revision2\experiment_manifest.json --json
 ```
 
 Revision 1 automatically skips the historical-forecast check because it does
-not declare that protocol; revision 2 runs all four checks. The command exits
+not declare that protocol; revision 2 runs all five checks. The command exits
 nonzero when configuration, forecast timing, recomputed
 metrics, or result-table coverage drift; when a declared artifact is missing,
 unrecorded, resized, or changed; or when the recorded historical source

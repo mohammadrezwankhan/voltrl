@@ -19,6 +19,7 @@ from historical_forecast_contract import (
     verify_historical_forecast_contract,
 )
 from software_provenance import verify_software_provenance
+from synthetic_statistics_contract import verify_synthetic_statistics_contract
 
 CheckStatus = Literal["passed", "failed", "skipped"]
 Verifier = Callable[[], list[str]]
@@ -119,6 +120,10 @@ def audit_result_bundle(
         _run_check(
             "experiment_contract",
             lambda: verify_experiment_contract(manifest_path),
+        ),
+        _run_check(
+            "synthetic_statistics_contract",
+            lambda: verify_synthetic_statistics_contract(manifest_path),
         ),
         _run_check(
             "artifact_integrity",
