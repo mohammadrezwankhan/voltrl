@@ -78,6 +78,24 @@ class ArtifactIntegrityTests(unittest.TestCase):
         self.assertIn("size mismatch for metrics.csv: expected True, found 1", errors)
         self.assertIn("SHA-256 mismatch for metrics.csv", errors)
 
+    def test_uppercase_digest_is_accepted(self):
+        self.assertEqual(record_artifact_inventory(self.manifest_path), 2)
+        manifest = json.loads(self.manifest_path.read_text(encoding="utf-8"))
+        for entry in manifest["artifact_inventory"]:
+            entry["sha256"] = entry["sha256"].upper()
+        self.manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+        self.assertEqual(verify_artifact_manifest(self.manifest_path), [])
+
+    def test_manifest_rejects_invalid_output_paths(self):
+        self.manifest_path.write_text(
+            json.dumps({"outputs": ["../outside.csv", "metrics.csv"]}), encoding="utf-8"
+        )
+        with self.assertRaisesRegex(
+            ValueError, "canonical relative paths"
+        ):
+            verify_artifact_manifest(self.manifest_path)
+
     def test_incomplete_inventory_is_reported(self):
         inventory = build_artifact_inventory(self.result_dir, self.outputs[:1])
         self.manifest_path.write_text(

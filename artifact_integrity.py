@@ -12,7 +12,7 @@ from typing import Sequence
 
 HASH_CHUNK_BYTES = 1024 * 1024
 CANONICAL_TEXT_SUFFIXES = {".csv"}
-SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
+SHA256_PATTERN = re.compile(r"[0-9a-fA-F]{64}")
 
 
 def _artifact_path(root: Path, relative_path: str) -> Path:
@@ -90,6 +90,14 @@ def _declared_outputs(manifest: dict[str, object]) -> list[str]:
         isinstance(item, str) for item in outputs
     ):
         raise ValueError("manifest outputs must be a list of paths")
+    for item in outputs:
+        if not item:
+            raise ValueError("manifest outputs must be nonempty paths")
+        if "\\" in item:
+            raise ValueError("manifest outputs must use POSIX-style paths")
+        path = PurePosixPath(item)
+        if path.is_absolute() or ".." in path.parts:
+            raise ValueError("manifest outputs must be canonical relative paths")
     if len(outputs) != len(set(outputs)):
         raise ValueError("manifest outputs contain duplicate paths")
     return outputs
@@ -165,11 +173,16 @@ def verify_artifact_manifest(manifest_path: Path) -> list[str]:
             )
 
         expected_hash = entry.get("sha256")
+        normalized_hash = (
+            expected_hash.lower()
+            if isinstance(expected_hash, str)
+            else expected_hash
+        )
         actual_hash = hashlib.sha256(content).hexdigest()
         if (
             not isinstance(expected_hash, str)
             or SHA256_PATTERN.fullmatch(expected_hash) is None
-            or expected_hash != actual_hash
+            or normalized_hash != actual_hash
         ):
             errors.append(f"SHA-256 mismatch for {relative_path}")
     return errors
