@@ -14,9 +14,12 @@
 - `voltrl_benchmark.py` — synthetic state ablation, expanded training-only resolution selection, SARX forecasting, historical 24-hour block scheduling, uncertainty, sensitivity, and figures.
 - `artifact_integrity.py` — records and verifies byte sizes and SHA-256 digests
   for every declared result artifact.
-- `tests/` — 18 deterministic tests, including forecast causality, same-day
-  block commitment, artifact tampering, path safety, nonlinear full-cycle
-  normalization, SOC feasibility, and oracle dominance.
+- `software_provenance.py` — binds each result manifest to a clean historical
+  Git commit or the exact bytes of an uncommitted source snapshot.
+- `tests/` — deterministic tests covering forecast causality, same-day block
+  commitment, artifact and source tampering, historical commit verification,
+  path safety, nonlinear full-cycle normalization, SOC feasibility, and oracle
+  dominance.
 - `requirements.txt`, `LICENSE`, `CITATION.cff`, and `README.md` — pinned environment, license, citation metadata, and reproduction instructions.
 
 ## Results
@@ -28,7 +31,8 @@
 - DK1/DK2 block-schedule metrics and data-quality disclosure;
 - day-ahead forecast-detail and forecast-summary tables;
 - physical, planner-discount, and degradation-model sensitivities;
-- solver diagnostics and an integrity-verifiable `experiment_manifest.json`;
+- solver diagnostics and an artifact- and source-verifiable
+  `experiment_manifest.json`;
 - mandatory OPSD input verification using `input_provenance.py` and the
   machine-readable `data/opsd_source.json` record;
 - six result figures in PNG and PDF, with both formats declared in the manifest.
