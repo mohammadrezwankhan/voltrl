@@ -13,7 +13,8 @@
 - `voltrl.py` — finite battery model, nonlinear DOD/SOC aging cost, solvers, simulation, and perfect-foresight diagnostic.
 - `voltrl_benchmark.py` — synthetic state ablation, expanded training-only resolution selection, SARX forecasting, historical 24-hour block scheduling, uncertainty, sensitivity, and figures.
 - `artifact_integrity.py` — records and verifies byte sizes and SHA-256 digests
-  for every declared result artifact.
+  for every declared result artifact, with cross-platform LF canonicalization
+  for CSV tables and byte-exact checks for figures.
 - `software_provenance.py` — binds each result manifest to a clean historical
   Git commit or the exact bytes of an uncommitted source snapshot.
 - `tests/` — deterministic tests covering forecast causality, same-day block

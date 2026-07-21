@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - "**/*.py"
+      - ".gitattributes"
       - "data/*.json"
       - "results_*/experiment_manifest.json"
       - "requirements.txt"
@@ -14,6 +15,7 @@ on:
       - main
     paths:
       - "**/*.py"
+      - ".gitattributes"
       - "data/*.json"
       - "results_*/experiment_manifest.json"
       - "requirements.txt"
