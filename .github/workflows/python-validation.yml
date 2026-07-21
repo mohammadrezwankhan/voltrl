@@ -57,6 +57,7 @@ jobs:
         run: |
           python experiment_contract.py results_revision/experiment_manifest.json
           python experiment_contract.py results_revision2/experiment_manifest.json
+          python historical_forecast_contract.py results_revision2/experiment_manifest.json
 
       - name: Verify published result bundles
         run: |
