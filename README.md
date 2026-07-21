@@ -105,16 +105,24 @@ aging and physical sensitivities, solver checks, a machine-readable manifest,
 and PNG/PDF figures. Publication claims are based on `voltrl_benchmark.py` and
 `results_revision2/`.
 
-The manifest records the verified source digest and byte count, then declares
-every CSV and PNG/PDF figure with its byte size and SHA-256 digest. Run the
-artifact verifier after downloading, copying, or archiving the results:
+The manifest records the verified dataset digest and byte count, binds the
+results to the exact Git commit and source-file digests used to generate them,
+then declares every CSV and PNG/PDF figure with its byte size and SHA-256
+digest. Run both verifiers after cloning, downloading, copying, or archiving
+the results:
 
 ```powershell
 python artifact_integrity.py results_revision2\experiment_manifest.json
+python software_provenance.py results_revision2\experiment_manifest.json
 ```
 
-The command exits nonzero when a declared artifact is missing, unrecorded,
-resized, or has different content.
+The commands exit nonzero when a declared artifact is missing, unrecorded,
+resized, or changed, or when the recorded historical source snapshot is absent
+or does not match its byte sizes and SHA-256 digests. Clean runs are verified
+against immutable Git objects; runs made from uncommitted code record and check
+the exact working-tree bytes instead. CSV files are canonicalized to LF before
+hashing so the same table verifies on Windows and Linux; PNG and PDF artifacts
+remain byte-exact.
 
 ## License
 

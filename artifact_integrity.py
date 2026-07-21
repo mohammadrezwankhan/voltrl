@@ -10,6 +10,7 @@ from pathlib import Path, PurePosixPath
 from typing import Sequence
 
 HASH_CHUNK_BYTES = 1024 * 1024
+CANONICAL_TEXT_SUFFIXES = {".csv"}
 
 
 def _artifact_path(root: Path, relative_path: str) -> Path:
@@ -42,6 +43,13 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _canonical_artifact_content(path: Path) -> bytes:
+    content = path.read_bytes()
+    if path.suffix.lower() in CANONICAL_TEXT_SUFFIXES:
+        return content.replace(b"\r\n", b"\n")
+    return content
+
+
 def build_artifact_inventory(
     result_dir: Path, relative_paths: Sequence[str]
 ) -> list[dict[str, object]]:
@@ -56,11 +64,12 @@ def build_artifact_inventory(
         artifact_path = _artifact_path(result_dir, relative_path)
         if not artifact_path.is_file():
             raise FileNotFoundError(f"declared artifact is missing: {relative_path}")
+        content = _canonical_artifact_content(artifact_path)
         inventory.append(
             {
                 "path": relative_path,
-                "bytes": artifact_path.stat().st_size,
-                "sha256": sha256_file(artifact_path),
+                "bytes": len(content),
+                "sha256": hashlib.sha256(content).hexdigest(),
             }
         )
     return inventory
@@ -140,7 +149,8 @@ def verify_artifact_manifest(manifest_path: Path) -> list[str]:
             errors.append(f"missing artifact: {relative_path}")
             continue
 
-        actual_size = artifact_path.stat().st_size
+        content = _canonical_artifact_content(artifact_path)
+        actual_size = len(content)
         expected_size = entry.get("bytes")
         if not isinstance(expected_size, int) or expected_size != actual_size:
             errors.append(
@@ -149,7 +159,7 @@ def verify_artifact_manifest(manifest_path: Path) -> list[str]:
             )
 
         expected_hash = entry.get("sha256")
-        actual_hash = sha256_file(artifact_path)
+        actual_hash = hashlib.sha256(content).hexdigest()
         if not isinstance(expected_hash, str) or expected_hash != actual_hash:
             errors.append(f"SHA-256 mismatch for {relative_path}")
     return errors

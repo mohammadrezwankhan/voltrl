@@ -29,6 +29,7 @@ import pandas as pd
 
 from artifact_integrity import build_artifact_inventory
 from input_provenance import DEFAULT_SOURCE_RECORD, verify_source_file
+from software_provenance import capture_software_provenance
 from voltrl import (
     ACTION_NAMES,
     Action,
@@ -55,6 +56,7 @@ POLICY_BLOCK = "SARX day-ahead block DP"
 POLICY_BLOCK_SEASONAL = "Seasonal-mean day-ahead block DP"
 POLICY_BLOCK_PERSISTENCE = "Previous-day persistence block DP"
 REPOSITORY_URL = "https://github.com/mohammadrezwankhan/voltrl"
+REPOSITORY_ROOT = Path(__file__).resolve().parent
 FIGURE_OUTPUTS = [
     f"figures/Figure_{number}_{name}.{extension}"
     for number, name in (
@@ -1610,6 +1612,7 @@ def make_figures(
 
 
 def run_benchmark(args: argparse.Namespace) -> dict[str, object]:
+    software_provenance = capture_software_provenance(REPOSITORY_ROOT)
     output = Path(args.output_dir)
     output.mkdir(parents=True, exist_ok=True)
     candidates = tuple(int(value) for value in args.candidates.split(","))
@@ -1768,6 +1771,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, object]:
             "pandas": pd.__version__,
             "matplotlib": matplotlib.__version__,
         },
+        "software_provenance": software_provenance,
         "outputs": list(outputs) + FIGURE_OUTPUTS,
     }
     manifest["artifact_inventory"] = build_artifact_inventory(

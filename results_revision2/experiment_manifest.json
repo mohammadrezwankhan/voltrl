@@ -78,6 +78,27 @@
       "DK_2_price_day_ahead"
     ]
   },
+  "software_provenance": {
+    "git_commit": "70fa9609a1a122055f50f7897720eefc97cbb3e0",
+    "git_dirty": false,
+    "files": [
+      {
+        "path": "voltrl.py",
+        "bytes": 47882,
+        "sha256": "54f55b106ff179fcf3d7a8aed10ebfeeb234a41efcbd81d4912585513565ca39"
+      },
+      {
+        "path": "voltrl_benchmark.py",
+        "bytes": 68541,
+        "sha256": "4ded9545d34b5f49be95396d335b20062454ae6c2700310bba351830b07a8a40"
+      },
+      {
+        "path": "requirements.txt",
+        "bytes": 129,
+        "sha256": "d9be3b0ec1a6c469c9b610698f8c71a8b571dd671904c4362367805d0443aa92"
+      }
+    ]
+  },
   "runtime": {
     "python": "3.12.13 (main, Mar  3 2026, 15:01:35) [MSC v.1944 64 bit (AMD64)]",
     "platform": "Windows-11-10.0.26200-SP0",
@@ -115,68 +136,68 @@
   "artifact_inventory": [
     {
       "path": "synthetic_seed_metrics.csv",
-      "bytes": 45005,
-      "sha256": "b3ec684520e4759d3c479bb0946c9213954f19c57b2d48b73feb4477522ac253"
+      "bytes": 44824,
+      "sha256": "3d741cf27fce90934d15d906c859f7b272ab1f3171ef08643492226fb5165c6a"
     },
     {
       "path": "synthetic_summary.csv",
-      "bytes": 855,
-      "sha256": "bed74b2913e2eb91b6b4aa87dc15900ec07def0fca6bf5df392580c4e575bee6"
+      "bytes": 848,
+      "sha256": "836c29ac2aab96e5245f5c95b57d5f104800e2537d452ec9a7aa4453861cbeb2"
     },
     {
       "path": "paired_seed_comparisons.csv",
-      "bytes": 600,
-      "sha256": "915977fedf553cbf6d4615d1ff1f0678bc6f722f9ae4de74a3378f2e3e99c224"
+      "bytes": 595,
+      "sha256": "4f79e90d7abb2f4aecd4b75c8be5103ac464c35736cee5828f37351a4f6dd009"
     },
     {
       "path": "real_market_metrics.csv",
-      "bytes": 3256,
-      "sha256": "63ea758cacf37287e8230e83e148249ebb00bd8df19ad452f662f65aae22a646"
+      "bytes": 3245,
+      "sha256": "ea03bc191b8979277fceda5508b418485404785719e3ff6f2df4cdf651b53f54"
     },
     {
       "path": "historical_forecast_summary.csv",
-      "bytes": 654,
-      "sha256": "60a875c0c2d0b7ec4f08fc99996d5cbabf45edb74c249a53fb41962d56843ac9"
+      "bytes": 647,
+      "sha256": "da8eeb3b4e3dae45df49e4e4f1ab2f1caf495f24e8ea61c9ea64456f8616aab5"
     },
     {
       "path": "historical_forecast_detail.csv",
-      "bytes": 15965317,
-      "sha256": "c65c1ecd45e7623c4a56541ab6782d63e42c73858f401a9bc692fb506cc762ee"
+      "bytes": 15874596,
+      "sha256": "80e09d6c29107323c2bb699cf3c9f820f04cbfb780ab84bdf79b0553c534a065"
     },
     {
       "path": "model_selection_folds.csv",
-      "bytes": 129873,
-      "sha256": "1486b120293e91b5d644b2c2f8e668c2e718a2e0fd6f1dbdbc3f5dfbb2f1525e"
+      "bytes": 127892,
+      "sha256": "e9dfb0c033efd4d274756364da3b91bc438cf08d142118551793f642ee510a0a"
     },
     {
       "path": "case_diagnostics.csv",
-      "bytes": 8528,
-      "sha256": "c39f94f8d51f82f72f9479668b594f9ccc1610ebd0593f0c924ed5766353c489"
+      "bytes": 8495,
+      "sha256": "e5ae91f38333ef55cc0c1cec498b82c04ffd062e759b768e6e71b35eb795ff57"
     },
     {
       "path": "data_quality.csv",
-      "bytes": 324,
-      "sha256": "90b2e9a39607ce41c27130ed3c54525adf01eb837066be923a13bc239577e175"
+      "bytes": 321,
+      "sha256": "9a9d05e9f99f0b708d588abc35c498ed115b9a715297702218ec1ca9097f85c9"
     },
     {
       "path": "physical_sensitivity.csv",
-      "bytes": 3912,
-      "sha256": "132ccb2af65511087bb9accfb255988e0042591d0d3a6bd04b24f97026cccea9"
+      "bytes": 3893,
+      "sha256": "c6bd62c2dbdb68ac7ceffe021438fd6fbd4093fe19a9f62fda3a13b7704eead0"
     },
     {
       "path": "gamma_sensitivity.csv",
-      "bytes": 738,
-      "sha256": "5b4aa559c0ea1ba24fda0323233718c952ff56d6ce16069221a98307508c585e"
+      "bytes": 734,
+      "sha256": "f3185e432aa859ec92b3d3463051c80b8f07d038664d5977ff1ef98a3595dd4d"
     },
     {
       "path": "degradation_model_sensitivity.csv",
-      "bytes": 1460,
-      "sha256": "fb6b41b4b654162326c3d7c61a226394444940574e8affcde054018b268f1d63"
+      "bytes": 1453,
+      "sha256": "6d0486a169a5c4f0baf1cd7c24e1e8ef2f02319624498f73262893f7744269e5"
     },
     {
       "path": "solver_diagnostics.csv",
-      "bytes": 393,
-      "sha256": "bc648b63bc0db11c541cd8dbf97f3e39333fd3abe3af34bdbf8b21777b29483e"
+      "bytes": 390,
+      "sha256": "14b6be4481dc57a536581546efe6038a4fcfe030e76c2e29ee8b0595c1c5c9de"
     },
     {
       "path": "figures/Figure_1_data_and_model_selection.png",
