@@ -78,6 +78,27 @@
       "DK_2_price_day_ahead"
     ]
   },
+  "software_provenance": {
+    "git_commit": "70fa9609a1a122055f50f7897720eefc97cbb3e0",
+    "git_dirty": false,
+    "files": [
+      {
+        "path": "voltrl.py",
+        "bytes": 47882,
+        "sha256": "54f55b106ff179fcf3d7a8aed10ebfeeb234a41efcbd81d4912585513565ca39"
+      },
+      {
+        "path": "voltrl_benchmark.py",
+        "bytes": 68541,
+        "sha256": "4ded9545d34b5f49be95396d335b20062454ae6c2700310bba351830b07a8a40"
+      },
+      {
+        "path": "requirements.txt",
+        "bytes": 129,
+        "sha256": "d9be3b0ec1a6c469c9b610698f8c71a8b571dd671904c4362367805d0443aa92"
+      }
+    ]
+  },
   "runtime": {
     "python": "3.12.13 (main, Mar  3 2026, 15:01:35) [MSC v.1944 64 bit (AMD64)]",
     "platform": "Windows-11-10.0.26200-SP0",
