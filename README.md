@@ -73,9 +73,7 @@ python voltrl_benchmark.py `
   --candidates 4,6,8,10,12,16,20,24,32,40,48
 
 python -m unittest discover -s tests -v
-python experiment_contract.py results_revision2\experiment_manifest.json
-python historical_forecast_contract.py results_revision2\experiment_manifest.json
-python artifact_integrity.py results_revision2\experiment_manifest.json
+python result_bundle_audit.py results_revision2\experiment_manifest.json
 ```
 
 The upper resolution is 48 rather than 12. Transition rows use hierarchical
@@ -116,17 +114,17 @@ candidate/fold grid, selected-bin diagnostics, chronological split sizes, and
 reported sample counts. The historical forecast contract then reconstructs
 forecast errors and summary metrics from all timestamped rows, checks that each
 24-hour block uses only information available before delivery, and confirms
-that methods share the same realized prices and test horizon. Run all four
-result verifiers after cloning, downloading, copying, or archiving the results:
+that methods share the same realized prices and test horizon. Run the complete
+applicable audit after cloning, downloading, copying, or archiving the results:
 
 ```powershell
-python experiment_contract.py results_revision2\experiment_manifest.json
-python historical_forecast_contract.py results_revision2\experiment_manifest.json
-python artifact_integrity.py results_revision2\experiment_manifest.json
-python software_provenance.py results_revision2\experiment_manifest.json
+python result_bundle_audit.py results_revision\experiment_manifest.json
+python result_bundle_audit.py results_revision2\experiment_manifest.json --json
 ```
 
-The commands exit nonzero when configuration, forecast timing, recomputed
+Revision 1 automatically skips the historical-forecast check because it does
+not declare that protocol; revision 2 runs all four checks. The command exits
+nonzero when configuration, forecast timing, recomputed
 metrics, or result-table coverage drift; when a declared artifact is missing,
 unrecorded, resized, or changed; or when the recorded historical source
 snapshot is absent or does not match its byte sizes and SHA-256 digests. Clean
@@ -134,6 +132,8 @@ runs are verified against immutable Git objects; runs made from uncommitted
 code record and check the exact working-tree bytes instead. CSV files are
 canonicalized to LF before hashing so the same table verifies on Windows and
 Linux; PNG and PDF artifacts remain byte-exact.
+
+The individual verifier commands remain available for focused diagnosis.
 
 ## License
 
