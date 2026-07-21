@@ -130,7 +130,7 @@ Revision 1 automatically skips the historical-forecast check because it does
 not declare that protocol; revision 2 runs all five checks. The command exits
 nonzero when configuration, forecast timing, recomputed
 metrics, or result-table coverage drift; when a declared artifact is missing,
-unrecorded, resized, or changed; or when the recorded historical source
+unrecorded, has malformed integrity metadata, is resized, or is changed; or when the recorded historical source
 snapshot is absent or does not match its byte sizes and SHA-256 digests. Clean
 runs are verified against immutable Git objects; runs made from uncommitted
 code record and check the exact working-tree bytes instead. CSV files are
