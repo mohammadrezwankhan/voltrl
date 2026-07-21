@@ -39,6 +39,15 @@ class ArtifactIntegrityTests(unittest.TestCase):
         self.assertEqual(record_artifact_inventory(self.manifest_path), 2)
         self.assertEqual(verify_artifact_manifest(self.manifest_path), [])
 
+    def test_csv_line_endings_are_canonicalized_to_lf(self):
+        metrics = self.result_dir / "metrics.csv"
+        metrics.write_bytes(b"value\r\n1\r\n")
+        crlf_inventory = build_artifact_inventory(self.result_dir, ["metrics.csv"])
+        metrics.write_bytes(b"value\n1\n")
+        lf_inventory = build_artifact_inventory(self.result_dir, ["metrics.csv"])
+        self.assertEqual(crlf_inventory, lf_inventory)
+        self.assertEqual(crlf_inventory[0]["bytes"], 8)
+
     def test_tampering_is_reported(self):
         record_artifact_inventory(self.manifest_path)
         (self.result_dir / "metrics.csv").write_bytes(b"value\n2\n")

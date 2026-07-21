@@ -120,7 +120,9 @@ The commands exit nonzero when a declared artifact is missing, unrecorded,
 resized, or changed, or when the recorded historical source snapshot is absent
 or does not match its byte sizes and SHA-256 digests. Clean runs are verified
 against immutable Git objects; runs made from uncommitted code record and check
-the exact working-tree bytes instead.
+the exact working-tree bytes instead. CSV files are canonicalized to LF before
+hashing so the same table verifies on Windows and Linux; PNG and PDF artifacts
+remain byte-exact.
 
 ## License
 
