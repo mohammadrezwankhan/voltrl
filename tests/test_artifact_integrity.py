@@ -54,6 +54,30 @@ class ArtifactIntegrityTests(unittest.TestCase):
         errors = verify_artifact_manifest(self.manifest_path)
         self.assertIn("SHA-256 mismatch for metrics.csv", errors)
 
+    def test_boolean_size_and_malformed_digest_are_rejected(self):
+        (self.result_dir / "metrics.csv").write_bytes(b"x")
+        self.outputs = ["metrics.csv"]
+        self.manifest_path.write_text(
+            json.dumps(
+                {
+                    "outputs": self.outputs,
+                    "artifact_inventory": [
+                        {
+                            "path": "metrics.csv",
+                            "bytes": True,
+                            "sha256": "not-a-digest",
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        errors = verify_artifact_manifest(self.manifest_path)
+
+        self.assertIn("size mismatch for metrics.csv: expected True, found 1", errors)
+        self.assertIn("SHA-256 mismatch for metrics.csv", errors)
+
     def test_incomplete_inventory_is_reported(self):
         inventory = build_artifact_inventory(self.result_dir, self.outputs[:1])
         self.manifest_path.write_text(

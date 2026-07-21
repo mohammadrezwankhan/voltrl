@@ -5,12 +5,14 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from pathlib import Path, PurePosixPath
 from typing import Sequence
 
 HASH_CHUNK_BYTES = 1024 * 1024
 CANONICAL_TEXT_SUFFIXES = {".csv"}
+SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
 
 
 def _artifact_path(root: Path, relative_path: str) -> Path:
@@ -152,7 +154,11 @@ def verify_artifact_manifest(manifest_path: Path) -> list[str]:
         content = _canonical_artifact_content(artifact_path)
         actual_size = len(content)
         expected_size = entry.get("bytes")
-        if not isinstance(expected_size, int) or expected_size != actual_size:
+        if (
+            isinstance(expected_size, bool)
+            or not isinstance(expected_size, int)
+            or expected_size != actual_size
+        ):
             errors.append(
                 f"size mismatch for {relative_path}: expected {expected_size}, "
                 f"found {actual_size}"
@@ -160,7 +166,11 @@ def verify_artifact_manifest(manifest_path: Path) -> list[str]:
 
         expected_hash = entry.get("sha256")
         actual_hash = hashlib.sha256(content).hexdigest()
-        if not isinstance(expected_hash, str) or expected_hash != actual_hash:
+        if (
+            not isinstance(expected_hash, str)
+            or SHA256_PATTERN.fullmatch(expected_hash) is None
+            or expected_hash != actual_hash
+        ):
             errors.append(f"SHA-256 mismatch for {relative_path}")
     return errors
 
