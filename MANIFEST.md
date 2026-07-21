@@ -15,6 +15,9 @@
 - `artifact_integrity.py` — records and verifies byte sizes and SHA-256 digests
   for every declared result artifact, with cross-platform LF canonicalization
   for CSV tables and byte-exact checks for figures.
+- `experiment_contract.py` — checks manifest physics and study configuration
+  against seed, policy, candidate/fold, selected-bin, split, and sample-count
+  coverage in the published result tables.
 - `software_provenance.py` — binds each result manifest to a clean historical
   Git commit or the exact bytes of an uncommitted source snapshot.
 - `tests/` — deterministic tests covering forecast causality, same-day block

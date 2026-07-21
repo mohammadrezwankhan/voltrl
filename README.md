@@ -73,6 +73,7 @@ python voltrl_benchmark.py `
   --candidates 4,6,8,10,12,16,20,24,32,40,48
 
 python -m unittest discover -s tests -v
+python experiment_contract.py results_revision2\experiment_manifest.json
 python artifact_integrity.py results_revision2\experiment_manifest.json
 ```
 
@@ -108,21 +109,25 @@ and PNG/PDF figures. Publication claims are based on `voltrl_benchmark.py` and
 The manifest records the verified dataset digest and byte count, binds the
 results to the exact Git commit and source-file digests used to generate them,
 then declares every CSV and PNG/PDF figure with its byte size and SHA-256
-digest. Run both verifiers after cloning, downloading, copying, or archiving
-the results:
+digest. The experiment contract independently checks that manifest physics and
+study settings agree with synthetic seed coverage, policy rows, the complete
+candidate/fold grid, selected-bin diagnostics, chronological split sizes, and
+reported sample counts. Run all three result verifiers after cloning,
+downloading, copying, or archiving the results:
 
 ```powershell
+python experiment_contract.py results_revision2\experiment_manifest.json
 python artifact_integrity.py results_revision2\experiment_manifest.json
 python software_provenance.py results_revision2\experiment_manifest.json
 ```
 
-The commands exit nonzero when a declared artifact is missing, unrecorded,
-resized, or changed, or when the recorded historical source snapshot is absent
-or does not match its byte sizes and SHA-256 digests. Clean runs are verified
-against immutable Git objects; runs made from uncommitted code record and check
-the exact working-tree bytes instead. CSV files are canonicalized to LF before
-hashing so the same table verifies on Windows and Linux; PNG and PDF artifacts
-remain byte-exact.
+The commands exit nonzero when configuration and result-table coverage drift,
+when a declared artifact is missing, unrecorded, resized, or changed, or when
+the recorded historical source snapshot is absent or does not match its byte
+sizes and SHA-256 digests. Clean runs are verified against immutable Git
+objects; runs made from uncommitted code record and check the exact working-tree
+bytes instead. CSV files are canonicalized to LF before hashing so the same
+table verifies on Windows and Linux; PNG and PDF artifacts remain byte-exact.
 
 ## License
 
