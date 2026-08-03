@@ -11,6 +11,15 @@ each delivery day; realized prices are used only for settlement. VoltRL is a
 
 Public repository: <https://github.com/mohammadrezwankhan/voltrl>
 
+## Documentation Map
+
+- [Environment](#environment) for the pinned runtime.
+- [Historical data](#historical-data) for source provenance and checksum requirements.
+- [Reproduce the revised benchmark](#reproduce-the-revised-benchmark) for the canonical commands.
+- [Main conventions](#main-conventions) for the physical and information assumptions.
+- [Outputs](#outputs) for the manifest and audit trail.
+- [Contributing](CONTRIBUTING.md) and [citation metadata](CITATION.cff) for shared results.
+
 ## What changed in revision 2
 
 - Three-fold expanding-window model selection replaces the invalid BIC-like
@@ -138,6 +147,29 @@ canonicalized to LF before hashing so the same table verifies on Windows and
 Linux; PNG and PDF artifacts remain byte-exact.
 
 The individual verifier commands remain available for focused diagnosis.
+
+## Scope and Limitations
+
+VoltRL is a reproducible benchmark for comparing explicitly defined policies;
+it is not a live market interface, bidding strategy, revenue guarantee, or
+grid-operations approval. The price-taking abstraction omits bid curves, fees,
+imbalance settlement, market impact, outages, telemetry limits, and plant-level
+degradation certification. Treat historical and synthetic results as
+protocol-bound evidence, and document any change to the data, assumptions, or
+objective before comparing runs.
+
+## Contributing
+
+Focused improvements to the benchmark contract, provenance checks, tests, and
+documentation are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md), install the
+pinned dependencies, and run the full test and artifact-audit commands before
+opening a pull request.
+
+## Citation
+
+For papers, reports, or teaching material, cite the versioned metadata in
+[CITATION.cff](CITATION.cff) and identify the exact result bundle and source
+snapshot used.
 
 ## License
 
