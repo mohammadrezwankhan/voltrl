@@ -2,7 +2,7 @@ numpy==2.5.1
 pandas==3.0.1
 matplotlib==3.11.0
 python-docx==1.2.0
-latex2mathml==3.81.0
+latex2mathml==3.81.1
 lxml==6.1.0
 Pillow==12.3.0
 PyMuPDF==1.28.0
