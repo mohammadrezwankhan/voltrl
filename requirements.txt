@@ -1,6 +1,6 @@
 numpy==2.5.1
 pandas==3.0.1
-matplotlib==3.11.0
+matplotlib==3.11.2
 python-docx==1.2.0
 latex2mathml==3.81.0
 lxml==6.1.0
