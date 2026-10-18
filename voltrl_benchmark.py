@@ -184,6 +184,8 @@ def fit_state_model(
     current UTC hour and current price bin; the next hour is deterministic.
     """
 
+    if not math.isfinite(prior_strength) or prior_strength < 0:
+        raise ValueError("Prior strength must be finite and nonnegative.")
     clean = _validated_frame(frame)
     prices = clean["price"].to_numpy(dtype=float)
     discretizer = PriceDiscretizer.fit(prices, n_bins)
@@ -197,6 +199,8 @@ def fit_state_model(
         hours = clean["timestamp"].dt.hour.to_numpy(dtype=int)
         np.add.at(counts, (hours[:-1], labels[:-1], labels[1:]), 1.0)
         denominator = counts.sum(axis=2, keepdims=True) + prior_strength
+        if np.any(denominator == 0):
+            raise ValueError("Unobserved source states require a positive prior strength.")
         transition = (
             counts + prior_strength * marginal[None, None, :]
         ) / denominator
@@ -204,6 +208,8 @@ def fit_state_model(
         counts = np.zeros((n_bins, n_bins), dtype=float)
         np.add.at(counts, (labels[:-1], labels[1:]), 1.0)
         denominator = counts.sum(axis=1, keepdims=True) + prior_strength
+        if np.any(denominator == 0):
+            raise ValueError("Unobserved source states require a positive prior strength.")
         transition = (counts + prior_strength * marginal[None, :]) / denominator
 
     if not np.allclose(transition.sum(axis=-1), 1.0, atol=1e-12):
@@ -398,9 +404,17 @@ def trajectory_from_actions(
     initial_soc_mwh: float,
 ) -> pd.DataFrame:
     clean = _validated_frame(frame)
-    action_array = np.asarray(actions, dtype=int)
+    original_timestamps = pd.to_datetime(frame["timestamp"], utc=True, errors="coerce")
+    if len(frame) != len(clean) or not original_timestamps.reset_index(drop=True).equals(
+        clean["timestamp"]
+    ):
+        raise ValueError("Action rows must already be chronological and align with valid observations.")
+    action_array = np.asarray(actions)
     if action_array.shape != (len(clean),):
         raise ValueError("One action is required per test observation.")
+    if not np.isin(action_array, [int(action) for action in Action]).all():
+        raise ValueError("Actions must be valid CHARGE, IDLE, or DISCHARGE values.")
+    action_array = action_array.astype(int)
     levels = battery.soc_levels
     matches = np.where(np.isclose(levels, initial_soc_mwh))[0]
     if len(matches) != 1:
@@ -517,6 +531,16 @@ def _seasonal_features(timestamp: pd.Timestamp) -> np.ndarray:
     )
 
 
+def _validate_ar_lags(lags: tuple[int, ...]) -> None:
+    if not lags or any(
+        isinstance(lag, (bool, np.bool_))
+        or not isinstance(lag, (int, np.integer))
+        or lag <= 0
+        for lag in lags
+    ):
+        raise ValueError("AR lags must be nonempty positive integers.")
+
+
 def fit_seasonal_ar(
     train: pd.DataFrame,
     lags: tuple[int, ...] = (1, 2, 24, 48, 168),
@@ -524,7 +548,12 @@ def fit_seasonal_ar(
 ) -> SeasonalARModel:
     """Fit a ridge-stabilized seasonal autoregression on the training segment."""
 
+    _validate_ar_lags(lags)
+    if not math.isfinite(ridge) or ridge < 0:
+        raise ValueError("Ridge regularization must be finite and nonnegative.")
     clean = _validated_frame(train)
+    if max(lags) >= len(clean):
+        raise ValueError("Training history must extend beyond the largest AR lag.")
     prices = clean["price"].to_numpy(dtype=float)
     mean = float(np.mean(prices))
     scale = max(float(np.std(prices, ddof=1)), 1.0)
@@ -568,6 +597,29 @@ def seasonal_ar_forecast(
 ) -> np.ndarray:
     """Recursively forecast future prices using only observations available now."""
 
+    _validate_ar_lags(model.lags)
+    observed_prices = np.asarray(observed_prices, dtype=float)
+    if observed_prices.ndim != 1:
+        raise ValueError("Observed prices must be a one-dimensional series.")
+    if (
+        isinstance(current_index, (bool, np.bool_))
+        or not isinstance(current_index, (int, np.integer))
+        or not 0 <= current_index < len(observed_prices)
+    ):
+        raise ValueError("current_index must identify an available observation.")
+    if (
+        isinstance(steps, (bool, np.bool_))
+        or not isinstance(steps, (int, np.integer))
+        or steps < 0
+    ):
+        raise ValueError("Forecast steps must be a nonnegative integer.")
+    if current_index + steps >= len(timestamps):
+        raise ValueError("Timestamps must cover the requested forecast horizon.")
+    if steps and current_index + 1 < max(model.lags):
+        raise ValueError("Available history is shorter than the largest AR lag.")
+    history_start = max(0, current_index + 1 - max(model.lags))
+    if not np.isfinite(observed_prices[history_start : current_index + 1]).all():
+        raise ValueError("Available lag history must contain finite prices.")
     predictions: dict[int, float] = {}
     for target_index in range(current_index + 1, current_index + steps + 1):
         normalized_lags = []

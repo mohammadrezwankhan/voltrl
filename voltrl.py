@@ -64,6 +64,13 @@ class BatterySpec:
     soc_stress_cost_per_hour: float = 0.0
 
     def __post_init__(self) -> None:
+        for name in (
+            "capacity_mwh", "max_power_mw", "interval_hours", "charge_efficiency",
+            "discharge_efficiency", "degradation_cost_per_mwh", "dod_stress_exponent",
+            "linear_degradation_fraction", "soc_stress_cost_per_hour",
+        ):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError(f"{name} must be finite.")
         if self.capacity_mwh <= 0 or self.max_power_mw <= 0:
             raise ValueError("Capacity and maximum power must be positive.")
         if self.interval_hours <= 0:
@@ -96,7 +103,7 @@ class BatterySpec:
         return np.linspace(0.0, self.capacity_mwh, n + 1)
 
     def soc_delta(self, action: int | Action) -> float:
-        action = Action(int(action))
+        action = Action(action)
         if action == Action.CHARGE:
             return self.energy_step_mwh
         if action == Action.DISCHARGE:
@@ -196,8 +203,14 @@ class SolverConfig:
     def __post_init__(self) -> None:
         if not 0 <= self.gamma < 1:
             raise ValueError("Discount factor gamma must lie in [0, 1).")
-        if self.tolerance <= 0 or self.max_iterations <= 0:
-            raise ValueError("Tolerance and max_iterations must be positive.")
+        if not math.isfinite(self.tolerance) or self.tolerance <= 0:
+            raise ValueError("Tolerance must be finite and positive.")
+        if (
+            isinstance(self.max_iterations, (bool, np.bool_))
+            or not isinstance(self.max_iterations, (int, np.integer))
+            or self.max_iterations <= 0
+        ):
+            raise ValueError("max_iterations must be a positive integer.")
 
 
 @dataclass
@@ -278,8 +291,8 @@ def estimate_price_transition(
         raise ValueError("At least two binned prices are required.")
     if n_bins < 2 or np.any((z < 0) | (z >= n_bins)):
         raise ValueError("Price-bin indices are outside the declared range.")
-    if prior_strength < 0:
-        raise ValueError("Prior strength cannot be negative.")
+    if not math.isfinite(prior_strength) or prior_strength < 0:
+        raise ValueError("Prior strength must be finite and nonnegative.")
 
     counts = np.zeros((n_bins, n_bins), dtype=float)
     np.add.at(counts, (z[:-1], z[1:]), 1.0)
