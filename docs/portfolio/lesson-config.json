@@ -1,0 +1,287 @@
+{
+  "schema_version": 1,
+  "repository": "mohammadrezwankhan/voltrl",
+  "display_name": "VoltRL · Battery Arbitrage Research",
+  "description": "A finite-state battery-arbitrage benchmark with explicit data provenance, information boundaries and result contracts.",
+  "domain": "DOMAIN_A",
+  "theme": {
+    "accent": "#00E5FF",
+    "secondary": "#00E676",
+    "surface": "#0A192F",
+    "glow": "rgba(0, 229, 255, 0.35)",
+    "label": "Energy systems",
+    "short": "Energy"
+  },
+  "repo_type": "research model",
+  "source_revision": "c86bf0e52adf06922bbbf35f2274b68485a22660",
+  "source_snapshot_date": "2026-10-19",
+  "repo_url": "https://github.com/mohammadrezwankhan/voltrl",
+  "homepage": "https://mrkhan.co.technology/models/voltrl/",
+  "upstream": null,
+  "lessons": [
+    {
+      "id": "path-01",
+      "title": "Verify historical input provenance",
+      "summary": "Verify the exact OPSD source before parsing DK1/DK2 prices.",
+      "objective": "Verify the exact OPSD source before parsing DK1/DK2 prices.",
+      "checkpoint": "Reject filename/content drift before parsing. Record missing data as blocked, never as passing historical reproduction.",
+      "level": "Foundation",
+      "tags": [
+        "foundations",
+        "engineering",
+        "data-provenance",
+        "evidence"
+      ],
+      "source_paths": [
+        "data/opsd_source.json",
+        "data/README.md",
+        "input_provenance.py",
+        "tests/test_input_provenance.py"
+      ],
+      "source_urls": [
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/data/opsd_source.json",
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/data/README.md",
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/input_provenance.py",
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/tests/test_input_provenance.py"
+      ],
+      "parameters": [
+        {
+          "source_inputs": [
+            "required dataset filename",
+            "SHA-256",
+            "byte count"
+          ],
+          "expected_outputs": [
+            "verified source identity or explicit failure"
+          ],
+          "note": "Source reference; execution and scientific verification are separate."
+        }
+      ],
+      "command": null,
+      "native_id": null,
+      "native_route": null,
+      "execution_status": "source-linked guide; no execution by this dashboard"
+    },
+    {
+      "id": "path-02",
+      "title": "Define causal information boundaries",
+      "summary": "Distinguish sequential synthetic prices from precommitted 24-hour historical schedules.",
+      "objective": "Distinguish sequential synthetic prices from precommitted 24-hour historical schedules.",
+      "checkpoint": "Flag noncausal timing and incomplete blocks. Ensure methods use the same historical horizon and realized prices.",
+      "level": "Foundation",
+      "tags": [
+        "foundations",
+        "engineering",
+        "forecasting",
+        "uncertainty",
+        "validation",
+        "evidence"
+      ],
+      "source_paths": [
+        "voltrl_benchmark.py",
+        "historical_forecast_contract.py",
+        "tests/test_historical_forecast_contract.py"
+      ],
+      "source_urls": [
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/voltrl_benchmark.py",
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/historical_forecast_contract.py",
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/tests/test_historical_forecast_contract.py"
+      ],
+      "parameters": [
+        {
+          "source_inputs": [
+            "forecast issuance time",
+            "delivery timestamps",
+            "shared realized price rows"
+          ],
+          "expected_outputs": [
+            "causal schedule blocks",
+            "forecast errors"
+          ],
+          "note": "Source reference; execution and scientific verification are separate."
+        }
+      ],
+      "command": null,
+      "native_id": null,
+      "native_route": null,
+      "execution_status": "source-linked guide; no execution by this dashboard"
+    },
+    {
+      "id": "path-03",
+      "title": "Select a finite-state model",
+      "summary": "Inspect expanding-window model selection and price-only/hour-aware state resolution.",
+      "objective": "Inspect expanding-window model selection and price-only/hour-aware state resolution.",
+      "checkpoint": "Require complete candidate/fold coverage. Check diagnostic values and selection boundary before interpreting policy comparisons.",
+      "level": "Applied",
+      "tags": [
+        "application",
+        "engineering",
+        "validation",
+        "evidence"
+      ],
+      "source_paths": [
+        "voltrl_benchmark.py",
+        "experiment_contract.py",
+        "tests/test_experiment_contract.py"
+      ],
+      "source_urls": [
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/voltrl_benchmark.py",
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/experiment_contract.py",
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/tests/test_experiment_contract.py"
+      ],
+      "parameters": [
+        {
+          "source_inputs": [
+            "candidate resolutions 4,6,8,10,12,16,20,24,32,40,48",
+            "chronological train/holdout split"
+          ],
+          "expected_outputs": [
+            "candidate/fold table",
+            "selected state count",
+            "diagnostics"
+          ],
+          "note": "Source reference; execution and scientific verification are separate."
+        }
+      ],
+      "command": null,
+      "native_id": null,
+      "native_route": null,
+      "execution_status": "source-linked guide; no execution by this dashboard"
+    },
+    {
+      "id": "path-04",
+      "title": "Check battery reward and feasibility",
+      "summary": "Connect SOC constraints, efficiency, degradation and terminal inventory to policy rewards.",
+      "objective": "Connect SOC constraints, efficiency, degradation and terminal inventory to policy rewards.",
+      "checkpoint": "Check finite physical inputs and feasible actions. Retain terminal inventory valuation and declared degradation protocol.",
+      "level": "Applied",
+      "tags": [
+        "application",
+        "engineering",
+        "battery",
+        "state-estimation",
+        "validation",
+        "evidence"
+      ],
+      "source_paths": [
+        "voltrl_benchmark.py",
+        "tests/test_voltrl_benchmark.py",
+        "tests/test_numeric_and_causal_inputs.py"
+      ],
+      "source_urls": [
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/voltrl_benchmark.py",
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/tests/test_voltrl_benchmark.py",
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/tests/test_numeric_and_causal_inputs.py"
+      ],
+      "parameters": [
+        {
+          "source_inputs": [
+            "500 MWh capacity",
+            "100 MW step",
+            "0.95 one-way efficiency",
+            "declared cost and discount settings"
+          ],
+          "expected_outputs": [
+            "SOC trajectory",
+            "adjusted profit",
+            "physical sensitivity records"
+          ],
+          "note": "Source reference; execution and scientific verification are separate."
+        }
+      ],
+      "command": null,
+      "native_id": null,
+      "native_route": null,
+      "execution_status": "source-linked guide; no execution by this dashboard"
+    },
+    {
+      "id": "path-05",
+      "title": "Recompute synthetic policy comparisons",
+      "summary": "Trace aggregate statistics back to independently regenerated seed-level rows.",
+      "objective": "Trace aggregate statistics back to independently regenerated seed-level rows.",
+      "checkpoint": "Recompute summaries and paired statistics. Reject missing/duplicate seeds or drifted annualization rather than trusting display values.",
+      "level": "Advanced",
+      "tags": [
+        "verification",
+        "engineering",
+        "evidence"
+      ],
+      "source_paths": [
+        "synthetic_statistics_contract.py",
+        "tests/test_synthetic_statistics_contract.py",
+        "results_revision2/experiment_manifest.json"
+      ],
+      "source_urls": [
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/synthetic_statistics_contract.py",
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/tests/test_synthetic_statistics_contract.py",
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/results_revision2/experiment_manifest.json"
+      ],
+      "parameters": [
+        {
+          "source_inputs": [
+            "seed rows",
+            "policy rows",
+            "annualization constants"
+          ],
+          "expected_outputs": [
+            "means",
+            "standard deviations",
+            "paired differences",
+            "interval checks"
+          ],
+          "note": "Source reference; execution and scientific verification are separate."
+        }
+      ],
+      "command": null,
+      "native_id": null,
+      "native_route": null,
+      "execution_status": "source-linked guide; no execution by this dashboard"
+    },
+    {
+      "id": "path-06",
+      "title": "Verify the complete evidence bundle",
+      "summary": "Bind every published claim to the manifest, source bytes and canonical artifacts.",
+      "objective": "Bind every published claim to the manifest, source bytes and canonical artifacts.",
+      "checkpoint": "Reject missing/unrecorded/changed artifacts and source mismatch. Revision 1 historical forecast skip must be distinguished from revision 2 full contract coverage.",
+      "level": "Advanced",
+      "tags": [
+        "verification",
+        "engineering",
+        "data-provenance",
+        "evidence"
+      ],
+      "source_paths": [
+        "result_bundle_audit.py",
+        "artifact_integrity.py",
+        "software_provenance.py",
+        "tests/test_result_bundle_audit.py",
+        "tests/test_artifact_integrity.py"
+      ],
+      "source_urls": [
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/result_bundle_audit.py",
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/artifact_integrity.py",
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/software_provenance.py",
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/tests/test_result_bundle_audit.py",
+        "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/tests/test_artifact_integrity.py"
+      ],
+      "parameters": [
+        {
+          "source_inputs": [
+            "experiment manifest",
+            "CSV/PNG/PDF outputs",
+            "Git/source snapshot"
+          ],
+          "expected_outputs": [
+            "machine-readable audit report",
+            "declared skips/failures"
+          ],
+          "note": "Source reference; execution and scientific verification are separate."
+        }
+      ],
+      "command": null,
+      "native_id": null,
+      "native_route": null,
+      "execution_status": "source-linked guide; no execution by this dashboard"
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "repository": {
+    "name": "voltrl",
+    "name_with_owner": "mohammadrezwankhan/voltrl",
+    "url": "https://github.com/mohammadrezwankhan/voltrl"
+  },
+  "native_source": {
+    "commit": "ece67be1cc14fa8b048ad081ce41e565ce0ff5eb",
+    "url": "https://github.com/mohammadrezwankhan/voltrl/tree/ece67be1cc14fa8b048ad081ce41e565ce0ff5eb",
+    "source_path_override": null
+  },
+  "browser_lab_package_provenance": {
+    "commit": "c86bf0e52adf06922bbbf35f2274b68485a22660",
+    "url": "https://github.com/mohammadrezwankhan/voltrl/tree/c86bf0e52adf06922bbbf35f2274b68485a22660",
+    "scope": "This browser lab is a standalone teaching approximation. Use the linked source for the project implementation.",
+    "calibration_status": "synthetic-analytical-fixtures",
+    "config_path": "docs/lesson-config.json"
+  },
+  "native_catalog_source": "Tracked Markdown in source lesson, example, study-case, concept, model, and documentation paths.",
+  "native_material_count": 1,
+  "reproduction_command_count": 2,
+  "materials": [
+    {
+      "id": "doc-8ec9a00bfd09",
+      "title": "VoltRL: Audit-Ready Battery-Arbitrage Benchmark",
+      "path": "README.md",
+      "line": 1,
+      "source_paths": [
+        "README.md"
+      ],
+      "source_url": "https://github.com/mohammadrezwankhan/voltrl/blob/c86bf0e52adf06922bbbf35f2274b68485a22660/README.md#L1",
+      "source_revision": "c86bf0e52adf06922bbbf35f2274b68485a22660",
+      "source_kind": "historical-reconciled-readme",
+      "source_label": "Historical README/source guide at c86bf0e52adf",
+      "catalog_url": null,
+      "native_url": null,
+      "excerpt": "VoltRL is a research benchmark for finite-state battery-arbitrage control under",
+      "type": "Native overview",
+      "section": "verification",
+      "tags": [
+        "verification"
+      ],
+      "track": null,
+      "lesson_id": null,
+      "source_blob_path": "README.md",
+      "source_blob_sha256": "dd21ede62199237f566c4e64a5ba9453c6ca72d661338a0095b0a69e0790204d",
+      "source_blob_retrieval": "git-show",
+      "source_blob_cache": null
+    }
+  ],
+  "commands": [
+    {
+      "command": "python -m pip install --disable-pip-version-check -r requirements.txt",
+      "label": "Expected environment setup",
+      "path": ".github/workflows/python-validation.yml",
+      "line": 52,
+      "source_url": "https://github.com/mohammadrezwankhan/voltrl/blob/ece67be1cc14fa8b048ad081ce41e565ce0ff5eb/.github/workflows/python-validation.yml#L52"
+    },
+    {
+      "command": "python -m unittest discover -s tests -v",
+      "label": "Source-defined validation command",
+      "path": ".github/workflows/python-validation.yml",
+      "line": 55,
+      "source_url": "https://github.com/mohammadrezwankhan/voltrl/blob/ece67be1cc14fa8b048ad081ce41e565ce0ff5eb/.github/workflows/python-validation.yml#L55"
+    }
+  ],
+  "engineering_curriculum_exclusions": [],
+  "visuals": {
+    "mapped_diagrams": [
+      {
+        "path": "diagrams/battery-arbitrage-state-machine.svg",
+        "fidelity": "Conceptual bounded charge/idle/discharge abstraction; not the full DP, MILP, or RL method."
+      }
+    ],
+    "section_banners": [
+      "section-01-question.svg",
+      "section-02-equations.svg",
+      "section-03-reproduce.svg",
+      "section-04-verification.svg",
+      "section-05-scope.svg"
+    ]
+  },
+  "native_document_banner_insertions": [],
+  "native_document_banner_audit": {
+    "schema_version": 1,
+    "eligibility_rule": "Tracked indexed Markdown in an examples, tutorials, lessons, studies, study-cases, concepts or notes directory, or whose path/title explicitly names a lesson, tutorial, example, walkthrough, study case or study. Banners are based only on existing semantic heading text, never directory names.",
+    "eligible_document_count": 0,
+    "lesson_document_candidates": 0,
+    "modified_document_count": 0,
+    "banner_insertion_count": 0,
+    "audit_gap_count": 0,
+    "banners": [],
+    "audit_gaps": [],
+    "explicit_exclusions": []
+  },
+  "dashboard": {
+    "browser_lab_is_surrogate": true,
+    "native_execution_in_browser": false,
+    "localStorage_or_existing_dashboard_scripts_preserved": true
+  }
+}

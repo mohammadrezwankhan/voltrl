@@ -1,215 +1,104 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" width="100%" height="100%">
-  <defs>
-    <!-- Gradients -->
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#050811" />
-      <stop offset="60%" stop-color="#161B22" />
-      <stop offset="100%" stop-color="#03050a" />
-    </linearGradient>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560" role="img" aria-labelledby="h-voltrl-title h-voltrl-desc">
+<title id="h-voltrl-title">VoltRL Arbitrage Evidence Lab — 2.5D teaching laboratory</title>
+<desc id="h-voltrl-desc">An isometric vector illustration of spread observatory. Decorative animation only; all dashboard telemetry is synthetic.</desc>
+<defs>
+      <linearGradient id="h-voltrl-bg" x2="1" y2="1"><stop stop-color="#161B22"/><stop offset="1" stop-color="#070C16"/></linearGradient>
+      <linearGradient id="h-voltrl-top" x2="0.8" y2="1"><stop stop-color="#FFAB00" stop-opacity=".3"/><stop offset="1" stop-color="#161B22"/></linearGradient>
+      <radialGradient id="h-voltrl-halo"><stop stop-color="#FFAB00" stop-opacity=".16"/><stop offset="1" stop-color="#FFAB00" stop-opacity="0"/></radialGradient>
+      <pattern id="h-voltrl-dots" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".7" fill="#BDD8EB" opacity=".12"/></pattern>
+      <clipPath id="h-voltrl-clip"><rect width="960" height="560" rx="24"/></clipPath>
+    </defs>
+    <style>
+      text{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+      .flow{animation:h-voltrl-flow 2.4s linear infinite}
+      .float{animation:h-voltrl-float 5s ease-in-out infinite}
+      .signal{animation:h-voltrl-signal 2.6s ease-in-out infinite}
+      @keyframes h-voltrl-flow{to{stroke-dashoffset:-34}}
+      @keyframes h-voltrl-float{50%{transform:translateY(-6px)}}
+      @keyframes h-voltrl-signal{50%{opacity:.35}}
+      @media(prefers-reduced-motion:reduce){.flow,.float,.signal{animation:none!important}}
+    </style>
+    <g clip-path="url(#h-voltrl-clip)">
+      <rect width="960" height="560" rx="24" fill="url(#h-voltrl-bg)"/>
+      <rect width="960" height="560" fill="url(#h-voltrl-dots)"/>
+      <ellipse cx="480" cy="326" rx="360" ry="225" fill="url(#h-voltrl-halo)"/>
+      <path d="M40 102H920" stroke="#FFAB00" stroke-opacity=".16"/>
 
-    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#FFAB00" />
-      <stop offset="100%" stop-color="#448AFF" />
-    </linearGradient>
-
-    <linearGradient id="tier1Grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFAB00" stop-opacity="0.25" />
-      <stop offset="100%" stop-color="#FFAB00" stop-opacity="0.05" />
-    </linearGradient>
-
-    <linearGradient id="tier2Grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#448AFF" stop-opacity="0.30" />
-      <stop offset="100%" stop-color="#448AFF" stop-opacity="0.08" />
-    </linearGradient>
-
-    <linearGradient id="tier3Grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFAB00" stop-opacity="0.45" />
-      <stop offset="100%" stop-color="#448AFF" stop-opacity="0.15" />
-    </linearGradient>
-
-    <!-- Filters -->
-    <filter id="ambientGlow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="12" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
-    </filter>
-
-    <filter id="intenseGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="6" result="blur1" />
-      <feGaussianBlur stdDeviation="18" result="blur2" />
-      <feMerge>
-        <feMergeNode in="blur2" />
-        <feMergeNode in="blur1" />
-        <feMergeNode in="SourceGraphic" />
-      </feMerge>
-    </filter>
-
-    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="16" stdDeviation="14" flood-color="#000000" flood-opacity="0.75" />
-    </filter>
-
-    <!-- Pattern -->
-    <pattern id="isoGrid" width="40" height="40" patternUnits="userSpaceOnUse">
-      <path d="M 40 0 L 0 20 L 40 40 Z" fill="none" stroke="#FFAB00" stroke-opacity="0.05" stroke-width="1" />
-      <path d="M 0 0 L 40 20 L 0 40 Z" fill="none" stroke="#448AFF" stroke-opacity="0.04" stroke-width="1" />
-    </pattern>
-  </defs>
-
-  <style>
-    @keyframes float1 {
-      0%, 100% { transform: translateY(0px) rotate(0deg); }
-      50% { transform: translateY(-12px) rotate(0.5deg); }
-    }
-    @keyframes float2 {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-16px); }
-    }
-    @keyframes pulseGlow {
-      0%, 100% { opacity: 0.45; filter: drop-shadow(0 0 4px #FFAB00); }
-      50% { opacity: 0.95; filter: drop-shadow(0 0 16px #FFAB00); }
-    }
-    @keyframes streamFlow {
-      0% { stroke-dashoffset: 120; }
-      100% { stroke-dashoffset: 0; }
-    }
-    .floating-tier { animation: float1 7s ease-in-out infinite; }
-    .floating-node { animation: float2 5s ease-in-out infinite; }
-    .pulsing-circuit { animation: pulseGlow 3.5s ease-in-out infinite; }
-    .data-stream { stroke-dasharray: 8 6; animation: streamFlow 2.5s linear infinite; }
-  </style>
-
-  <!-- Background Base -->
-  <rect width="1000" height="560" fill="url(#bgGrad)" />
-  <rect width="1000" height="560" fill="url(#isoGrid)" />
-
-  <!-- Background Ambient Glow Orbs -->
-  <circle cx="200" cy="120" r="140" fill="#FFAB00" opacity="0.08" filter="url(#ambientGlow)" />
-  <circle cx="820" cy="380" r="160" fill="#448AFF" opacity="0.07" filter="url(#ambientGlow)" />
-
-  <!-- Top Header / HUD Bar -->
-  <g transform="translate(50, 48)">
-    <!-- Domain Tag Pill -->
-    <rect x="0" y="0" width="220" height="30" rx="15" fill="#FFAB00" fill-opacity="0.12" stroke="#FFAB00" stroke-width="1.2" />
-    <circle cx="15" cy="15" r="4" fill="#FFAB00" filter="url(#intenseGlow)" />
-    <text x="28" y="19" fill="#FFAB00" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" letter-spacing="1.2">FINTECH &amp; SYSTEMS</text>
-
-    <!-- Main Title -->
-    <text x="0" y="65" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="800" letter-spacing="-0.5">VoltRL: Battery Arbitrage Benchmark</text>
-    <!-- Subtitle -->
-    <text x="0" y="92" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="400">Algorithmic Arbitrage, Degradation-Aware DP &amp; Wholesale Nodal Optimization</text>
-  </g>
-
-  <!-- Top Right Metric HUD -->
-  <g transform="translate(740, 48)">
-    <rect x="0" y="0" width="210" height="74" rx="12" fill="#0D1527" fill-opacity="0.75" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
-    <text x="18" y="26" fill="#64748B" font-family="system-ui, sans-serif" font-size="10" font-weight="600" letter-spacing="1">ARCHITECTURE</text>
-    <text x="18" y="50" fill="#448AFF" font-family="system-ui, sans-serif" font-size="18" font-weight="700">2.5D ISOMETRIC</text>
-    <circle cx="185" cy="24" r="5" fill="#00E676" filter="url(#intenseGlow)" />
-    <text x="150" y="50" fill="#94A3B8" font-family="monospace" font-size="11">ACTIVE</text>
-  </g>
-
-  <!-- ISOMETRIC 2.5D STAGE -->
-  <!-- Centered Projection Group -->
-  <g transform="translate(500, 340)">
-
-    <!-- TIER 1: FOUNDATION / PHYSICAL BOUNDARY LAYER -->
-    <g class="floating-tier" style="animation-delay: 0s;">
-      <!-- Base Slab Top Face -->
-      <polygon points="0,-100 280,40 0,180 -280,40" fill="url(#tier1Grad)" stroke="#FFAB00" stroke-width="1.8" filter="url(#dropShadow)" />
-      <!-- Base Slab Left Extrusion -->
-      <polygon points="-280,40 0,180 0,205 -280,65" fill="#050C1A" stroke="#FFAB00" stroke-opacity="0.4" stroke-width="1" />
-      <!-- Base Slab Right Extrusion -->
-      <polygon points="0,180 280,40 280,65 0,205" fill="#02060E" stroke="#FFAB00" stroke-opacity="0.3" stroke-width="1" />
-
-      <!-- Isometric Grid Traces on Base -->
-      <line x1="-140" y1="-30" x2="140" y2="110" stroke="#FFAB00" stroke-opacity="0.25" stroke-width="1" />
-      <line x1="140" y1="-30" x2="-140" y2="110" stroke="#FFAB00" stroke-opacity="0.25" stroke-width="1" />
-      <line x1="0" y1="-100" x2="0" y2="180" stroke="#FFAB00" stroke-opacity="0.35" stroke-width="1.2" stroke-dasharray="4 4" />
-      
-      <!-- Tier 1 Label -->
-      <text x="-240" y="100" fill="#FFAB00" opacity="0.6" font-family="system-ui, sans-serif" font-size="10" font-weight="700">LAYER 01: HARDWARE &amp; PHYSICAL BOUNDS</text>
-    </g>
-
-    <!-- TIER 2: MIDDLE COMPUTATIONAL / DIGITAL TWIN LAYER -->
-    <g class="floating-tier" style="animation-delay: -1.8s; transform: translateY(-55px);">
-      <!-- Mid Slab Top Face -->
-      <polygon points="0,-80 220,30 0,140 -220,30" fill="url(#tier2Grad)" stroke="#448AFF" stroke-width="2" filter="url(#dropShadow)" />
-      <!-- Mid Slab Left Extrusion -->
-      <polygon points="-220,30 0,140 0,158 -220,48" fill="#07141E" stroke="#448AFF" stroke-opacity="0.5" stroke-width="1" />
-      <!-- Mid Slab Right Extrusion -->
-      <polygon points="0,140 220,30 220,48 0,158" fill="#030B12" stroke="#448AFF" stroke-opacity="0.4" stroke-width="1" />
-
-      <!-- High-Tech Circuit Traces -->
-      <polyline points="-120,0 -40,40 40,0 120,40" fill="none" stroke="#448AFF" stroke-width="1.8" class="pulsing-circuit" />
-      <polyline points="0,-50 -60,-20 -60,40 0,70" fill="none" stroke="#FFAB00" stroke-width="1.4" class="data-stream" />
-
-      <!-- Tier 2 Label -->
-      <text x="-200" y="10" fill="#448AFF" opacity="0.8" font-family="system-ui, sans-serif" font-size="10" font-weight="700">LAYER 02: NEURAL / NUMERICAL CORE</text>
-    </g>
-
-    <!-- TIER 3: TOP APPLICATION & TELEMETRY LAYER -->
-    <g class="floating-tier" style="animation-delay: -3.6s; transform: translateY(-110px);">
-      <!-- Top Slab Face -->
-      <polygon points="0,-60 160,20 0,100 -160,20" fill="url(#tier3Grad)" stroke="#FFAB00" stroke-width="2.2" filter="url(#intenseGlow)" />
-      <!-- Top Slab Left Extrusion -->
-      <polygon points="-160,20 0,100 0,114 -160,34" fill="#0A1E2B" stroke="#FFAB00" stroke-opacity="0.6" stroke-width="1" />
-      <!-- Top Slab Right Extrusion -->
-      <polygon points="0,100 160,20 160,34 0,114" fill="#051017" stroke="#448AFF" stroke-opacity="0.5" stroke-width="1" />
-
-      <!-- Center Hex Core / Reactor -->
-      <polygon points="0,-25 35,-8 35,25 0,42 -35,25 -35,-8" fill="#161B22" stroke="url(#primaryGrad)" stroke-width="2" />
-      <circle cx="0" cy="8" r="14" fill="#FFAB00" filter="url(#intenseGlow)" class="pulsing-circuit" />
-      <circle cx="0" cy="8" r="6" fill="#FFFFFF" />
-
-      <!-- Tier 3 Label -->
-      <text x="-120" y="-35" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="10" font-weight="800" letter-spacing="1">LAYER 03: AUTONOMOUS TELEMETRY</text>
-    </g>
-
-    <!-- FLOATING 2.5D DATA NODES -->
-    <!-- Node A: Left Floating Data Pillar -->
-    <g class="floating-node" style="animation-delay: -0.5s; transform: translate(-230px, -60px);">
-      <!-- Top Face -->
-      <polygon points="0,-18 30,-3 0,12 -30,-3" fill="#FFAB00" stroke="#FFFFFF" stroke-width="1" />
-      <!-- Left Face -->
-      <polygon points="-30,-3 0,12 0,42 -30,27" fill="#00838F" />
-      <!-- Right Face -->
-      <polygon points="0,12 30,-3 30,27 0,42" fill="#00ACC1" />
-      <line x1="0" y1="42" x2="0" y2="120" stroke="#FFAB00" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.6" />
-      <text x="-40" y="-24" fill="#FFAB00" font-family="monospace" font-size="9" font-weight="700">NODE_ALPHA</text>
-    </g>
-
-    <!-- Node B: Right Floating Data Pillar -->
-    <g class="floating-node" style="animation-delay: -2.3s; transform: translate(220px, -90px);">
-      <!-- Top Face -->
-      <polygon points="0,-18 30,-3 0,12 -30,-3" fill="#448AFF" stroke="#FFFFFF" stroke-width="1" />
-      <!-- Left Face -->
-      <polygon points="-30,-3 0,12 0,42 -30,27" fill="#007E33" />
-      <!-- Right Face -->
-      <polygon points="0,12 30,-3 30,27 0,42" fill="#00C851" />
-      <line x1="0" y1="42" x2="0" y2="150" stroke="#448AFF" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.6" />
-      <text x="5" y="-24" fill="#448AFF" font-family="monospace" font-size="9" font-weight="700">NODE_BETA</text>
-    </g>
-
-    <!-- Node C: Top Floating Apex Cube -->
-    <g class="floating-node" style="animation-delay: -3.8s; transform: translate(0px, -200px);">
-      <!-- Top Face -->
-      <polygon points="0,-22 36,-4 0,14 -36,-4" fill="#FFFFFF" stroke="#FFAB00" stroke-width="1.5" />
-      <!-- Left Face -->
-      <polygon points="-36,-4 0,14 0,46 -36,28" fill="#FFAB00" />
-      <!-- Right Face -->
-      <polygon points="0,14 36,-4 36,28 0,46" fill="#448AFF" />
-      <!-- Glowing Beacon Ray -->
-      <line x1="0" y1="46" x2="0" y2="90" stroke="url(#primaryGrad)" stroke-width="2" class="pulsing-circuit" />
-      <text x="-45" y="-30" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="10" font-weight="800">PRODUCTION READY</text>
-    </g>
-
-    <!-- Pulsing Vertical Data Beams Connecting Tiers -->
-    <line x1="-120" y1="20" x2="-120" y2="-90" stroke="#FFAB00" stroke-width="1.5" class="data-stream" opacity="0.8" />
-    <line x1="120" y1="20" x2="120" y2="-90" stroke="#448AFF" stroke-width="1.5" class="data-stream" opacity="0.8" />
-  </g>
-
-  <!-- Footer Status Bar -->
-  <g transform="translate(50, 520)">
-    <text x="0" y="0" fill="#64748B" font-family="monospace" font-size="11">ENGINEERED BY MOHAMMAD REZWAN KHAN | PROFILE: mohammadrezwankhan | REPO: voltrl</text>
-    <text x="760" y="0" fill="#FFAB00" font-family="monospace" font-size="11" font-weight="700">STATUS: VERIFIED READY</text>
-  </g>
-</svg>
+<text x="40" y="39" fill="#FFAB00" font-size="11" font-weight="700" letter-spacing="2.8">SPREAD OBSERVATORY</text>
+<text x="40" y="76" fill="#F1F6FB" font-size="26" font-weight="600" >VoltRL Arbitrage Evidence Lab</text>
+<text x="920" y="40" fill="#8195AD" font-size="11" font-weight="500" text-anchor="end" letter-spacing="2">25D / 01</text>
+<polygon points="480.0,135.2 790.8,298.0 480.0,460.8 169.2,298.0" fill="#070D18" stroke="#FFAB00" stroke-width="1.2" opacity="0.7" />
+<polyline points="509.4,150.6 198.6,313.4" fill="none" stroke="#FFAB00" stroke-width="0.7" opacity="0.14" stroke-linecap="round" stroke-linejoin="round" />
+<polyline points="450.6,150.6 761.4,313.4" fill="none" stroke="#FFAB00" stroke-width="0.7" opacity="0.14" stroke-linecap="round" stroke-linejoin="round" />
+<polyline points="551.4,172.6 240.6,335.4" fill="none" stroke="#FFAB00" stroke-width="0.7" opacity="0.14" stroke-linecap="round" stroke-linejoin="round" />
+<polyline points="408.6,172.6 719.4,335.4" fill="none" stroke="#FFAB00" stroke-width="0.7" opacity="0.14" stroke-linecap="round" stroke-linejoin="round" />
+<polyline points="593.4,194.6 282.6,357.4" fill="none" stroke="#FFAB00" stroke-width="0.7" opacity="0.14" stroke-linecap="round" stroke-linejoin="round" />
+<polyline points="366.6,194.6 677.4,357.4" fill="none" stroke="#FFAB00" stroke-width="0.7" opacity="0.14" stroke-linecap="round" stroke-linejoin="round" />
+<polyline points="635.4,216.6 324.6,379.4" fill="none" stroke="#FFAB00" stroke-width="0.7" opacity="0.14" stroke-linecap="round" stroke-linejoin="round" />
+<polyline points="324.6,216.6 635.4,379.4" fill="none" stroke="#FFAB00" stroke-width="0.7" opacity="0.14" stroke-linecap="round" stroke-linejoin="round" />
+<polyline points="677.4,238.6 366.6,401.4" fill="none" stroke="#FFAB00" stroke-width="0.7" opacity="0.14" stroke-linecap="round" stroke-linejoin="round" />
+<polyline points="282.6,238.6 593.4,401.4" fill="none" stroke="#FFAB00" stroke-width="0.7" opacity="0.14" stroke-linecap="round" stroke-linejoin="round" />
+<polyline points="719.4,260.6 408.6,423.4" fill="none" stroke="#FFAB00" stroke-width="0.7" opacity="0.14" stroke-linecap="round" stroke-linejoin="round" />
+<polyline points="240.6,260.6 551.4,423.4" fill="none" stroke="#FFAB00" stroke-width="0.7" opacity="0.14" stroke-linecap="round" stroke-linejoin="round" />
+<polyline points="761.4,282.6 450.6,445.4" fill="none" stroke="#FFAB00" stroke-width="0.7" opacity="0.14" stroke-linecap="round" stroke-linejoin="round" />
+<polyline points="198.6,282.6 509.4,445.4" fill="none" stroke="#FFAB00" stroke-width="0.7" opacity="0.14" stroke-linecap="round" stroke-linejoin="round" />
+<polyline points="169.2,298.0 480.0,460.8 790.8,298.0" fill="none" stroke="#FFAB00" stroke-width="1.8" opacity="0.6" stroke-linecap="round" stroke-linejoin="round" />
+<g class="float">
+<polygon points="359.0,217.4 380.0,228.4 380.0,195.4 359.0,184.4" fill="#0D1828" stroke="#FFAB00" stroke-width="1.2" opacity="0.95" />
+<polygon points="408.6,213.4 380.0,228.4 380.0,195.4 408.6,180.4" fill="#182D41" stroke="#FFAB00" stroke-width="1.2" opacity="0.95" />
+<polygon points="387.6,169.4 408.6,180.4 380.0,195.4 359.0,184.4" fill="url(#h-voltrl-top)" stroke="#FFAB00" stroke-width="1.2" opacity="1" />
+<polygon points="308.6,243.8 329.6,254.8 329.6,200.8 308.6,189.8" fill="#0D1828" stroke="#448AFF" stroke-width="1.2" opacity="0.95" />
+<polygon points="358.2,239.8 329.6,254.8 329.6,200.8 358.2,185.8" fill="#182D41" stroke="#448AFF" stroke-width="1.2" opacity="0.95" />
+<polygon points="337.2,174.8 358.2,185.8 329.6,200.8 308.6,189.8" fill="url(#h-voltrl-top)" stroke="#448AFF" stroke-width="1.2" opacity="1" />
+<polygon points="394.7,236.1 415.7,247.1 415.7,202.1 394.7,191.1" fill="#0D1828" stroke="#FFAB00" stroke-width="1.2" opacity="0.95" />
+<polygon points="444.3,232.1 415.7,247.1 415.7,202.1 444.3,187.1" fill="#182D41" stroke="#FFAB00" stroke-width="1.2" opacity="0.95" />
+<polygon points="423.3,176.1 444.3,187.1 415.7,202.1 394.7,191.1" fill="url(#h-voltrl-top)" stroke="#FFAB00" stroke-width="1.2" opacity="1" />
+<polygon points="344.3,262.5 365.3,273.5 365.3,231.5 344.3,220.5" fill="#0D1828" stroke="#448AFF" stroke-width="1.2" opacity="0.95" />
+<polygon points="393.9,258.5 365.3,273.5 365.3,231.5 393.9,216.5" fill="#182D41" stroke="#448AFF" stroke-width="1.2" opacity="0.95" />
+<polygon points="372.9,205.5 393.9,216.5 365.3,231.5 344.3,220.5" fill="url(#h-voltrl-top)" stroke="#448AFF" stroke-width="1.2" opacity="1" />
+<polygon points="430.4,254.8 451.4,265.8 451.4,195.3 430.4,184.3" fill="#0D1828" stroke="#FFAB00" stroke-width="1.2" opacity="0.95" />
+<polygon points="480.0,250.8 451.4,265.8 451.4,195.3 480.0,180.3" fill="#182D41" stroke="#FFAB00" stroke-width="1.2" opacity="0.95" />
+<polygon points="459.0,169.3 480.0,180.3 451.4,195.3 430.4,184.3" fill="url(#h-voltrl-top)" stroke="#FFAB00" stroke-width="1.2" opacity="1" />
+<polygon points="380.0,281.2 401.0,292.2 401.0,275.7 380.0,264.7" fill="#0D1828" stroke="#448AFF" stroke-width="1.2" opacity="0.95" />
+<polygon points="429.6,277.2 401.0,292.2 401.0,275.7 429.6,260.7" fill="#182D41" stroke="#448AFF" stroke-width="1.2" opacity="0.95" />
+<polygon points="408.6,249.7 429.6,260.7 401.0,275.7 380.0,264.7" fill="url(#h-voltrl-top)" stroke="#448AFF" stroke-width="1.2" opacity="1" />
+<polygon points="466.1,273.5 487.1,284.5 487.1,230.5 466.1,219.5" fill="#0D1828" stroke="#FFAB00" stroke-width="1.2" opacity="0.95" />
+<polygon points="515.7,269.5 487.1,284.5 487.1,230.5 515.7,215.5" fill="#182D41" stroke="#FFAB00" stroke-width="1.2" opacity="0.95" />
+<polygon points="494.7,204.5 515.7,215.5 487.1,230.5 466.1,219.5" fill="url(#h-voltrl-top)" stroke="#FFAB00" stroke-width="1.2" opacity="1" />
+<polygon points="415.7,299.9 436.7,310.9 436.7,277.9 415.7,266.9" fill="#0D1828" stroke="#448AFF" stroke-width="1.2" opacity="0.95" />
+<polygon points="465.3,295.9 436.7,310.9 436.7,277.9 465.3,262.9" fill="#182D41" stroke="#448AFF" stroke-width="1.2" opacity="0.95" />
+<polygon points="444.3,251.9 465.3,262.9 436.7,277.9 415.7,266.9" fill="url(#h-voltrl-top)" stroke="#448AFF" stroke-width="1.2" opacity="1" />
+<polygon points="501.8,292.2 522.8,303.2 522.8,219.2 501.8,208.2" fill="#0D1828" stroke="#FFAB00" stroke-width="1.2" opacity="0.95" />
+<polygon points="551.4,288.2 522.8,303.2 522.8,219.2 551.4,204.2" fill="#182D41" stroke="#FFAB00" stroke-width="1.2" opacity="0.95" />
+<polygon points="530.4,193.2 551.4,204.2 522.8,219.2 501.8,208.2" fill="url(#h-voltrl-top)" stroke="#FFAB00" stroke-width="1.2" opacity="1" />
+<polygon points="451.4,318.6 472.4,329.6 472.4,314.6 451.4,303.6" fill="#0D1828" stroke="#448AFF" stroke-width="1.2" opacity="0.95" />
+<polygon points="501.0,314.6 472.4,329.6 472.4,314.6 501.0,299.6" fill="#182D41" stroke="#448AFF" stroke-width="1.2" opacity="0.95" />
+<polygon points="480.0,288.6 501.0,299.6 472.4,314.6 451.4,303.6" fill="url(#h-voltrl-top)" stroke="#448AFF" stroke-width="1.2" opacity="1" />
+<polygon points="537.5,310.9 558.5,321.9 558.5,258.9 537.5,247.9" fill="#0D1828" stroke="#FFAB00" stroke-width="1.2" opacity="0.95" />
+<polygon points="587.1,306.9 558.5,321.9 558.5,258.9 587.1,243.9" fill="#182D41" stroke="#FFAB00" stroke-width="1.2" opacity="0.95" />
+<polygon points="566.1,232.9 587.1,243.9 558.5,258.9 537.5,247.9" fill="url(#h-voltrl-top)" stroke="#FFAB00" stroke-width="1.2" opacity="1" />
+<polygon points="487.1,337.3 508.1,348.3 508.1,324.3 487.1,313.3" fill="#0D1828" stroke="#448AFF" stroke-width="1.2" opacity="0.95" />
+<polygon points="536.7,333.3 508.1,348.3 508.1,324.3 536.7,309.3" fill="#182D41" stroke="#448AFF" stroke-width="1.2" opacity="0.95" />
+<polygon points="515.7,298.3 536.7,309.3 508.1,324.3 487.1,313.3" fill="url(#h-voltrl-top)" stroke="#448AFF" stroke-width="1.2" opacity="1" />
+<polyline points="383.4,167.6 419.1,174.3 454.8,167.5 490.5,202.7 526.2,191.4 561.9,231.1" fill="none" stroke="#FFAB00" stroke-width="2.8" opacity="1" stroke-linecap="round" stroke-linejoin="round" />
+<circle cx="383.4" cy="167.6" r="3" fill="#FFAB00"/>
+<circle cx="419.1" cy="174.3" r="3" fill="#FFAB00"/>
+<circle cx="454.8" cy="167.5" r="3" fill="#FFAB00"/>
+<circle cx="490.5" cy="202.7" r="3" fill="#FFAB00"/>
+<circle cx="526.2" cy="191.4" r="3" fill="#FFAB00"/>
+<circle cx="561.9" cy="231.1" r="3" fill="#FFAB00"/>
+<polyline points="274.2,270.6 480.0,378.4 522.0,378.4" fill="none" stroke="#448AFF" stroke-width="5.4" opacity="0.08" stroke-linecap="round" stroke-linejoin="round" />
+<polyline points="274.2,270.6 480.0,378.4 522.0,378.4" fill="none" stroke="#448AFF" stroke-width="2.4" opacity="0.8" stroke-linecap="round" stroke-linejoin="round" class="flow" stroke-dasharray="9 8"/>
+<circle cx="274.2" cy="270.6" r="3" fill="#448AFF"/>
+<circle cx="522.0" cy="378.4" r="3" fill="#448AFF"/>
+</g>
+<polyline points="70.0,352.0 166.0,352.0 208.0,374.0" fill="none" stroke="#FFAB00" stroke-width="1" opacity="0.4" stroke-linecap="round" stroke-linejoin="round" />
+<text x="40" y="326" fill="#8195AD" font-size="11" font-weight="500" letter-spacing="2">EXPLORE THE</text>
+<text x="40" y="345" fill="#FFAB00" font-size="16" font-weight="600" letter-spacing="1">SYSTEM</text>
+<polyline points="770.0,213.0 819.0,186.0 916.0,186.0" fill="none" stroke="#448AFF" stroke-width="1" opacity="0.4" stroke-linecap="round" stroke-linejoin="round" />
+<text x="918" y="173" fill="#448AFF" font-size="11" font-weight="600" text-anchor="end" letter-spacing="1">ADJUST → OBSERVE</text>
+<path d="M40 506H920" stroke="#FFAB00" stroke-opacity=".15"/>
+<text x="40" y="532" fill="#8EA4BD" font-size="10" font-weight="500" letter-spacing="2">SIGNAL / FRICTION / SCENARIO</text>
+<circle cx="746.0" cy="528.0" r="3" fill="#448AFF" class="signal"/>
+<text x="759" y="532" fill="#8EA4BD" font-size="9" font-weight="600" letter-spacing="1.1">SYNTHETIC TEACHING MODEL</text>
+</g></svg>

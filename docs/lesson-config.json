@@ -1,94 +1,318 @@
 {
-  "repository": "voltrl",
-  "domain": "DOMAIN_C",
-  "title": "VoltRL: Battery Arbitrage Benchmark",
-  "version": "2.0.0",
-  "author": "Mohammad Rezwan Khan",
-  "lessons": [
+  "$schema": "./lesson-config.schema.json",
+  "schema_version": "1.0",
+  "repository": {
+    "owner": "mohammadrezwankhan",
+    "slug": "voltrl",
+    "name": "voltrl",
+    "title": "VoltRL Arbitrage Evidence Lab",
+    "url": "https://github.com/mohammadrezwankhan/voltrl",
+    "default_branch": "main",
+    "description": "Audit battery-arbitrage assumptions with finite-state benchmarks, chronological protocols & reproducible model evidence.",
+    "summary": "VoltRL compares finite-state battery policies under synthetic prices and a documented historical day-ahead protocol. The browser isolates a generic friction calculation before the native inventory, aging, and information constraints.",
+    "audience": "Energy-market researchers and developers learning to compare battery policies without information leakage.",
+    "topics": [
+      "battery-arbitrage",
+      "energy-markets",
+      "energy-storage",
+      "optimization",
+      "markov-decision-process",
+      "dynamic-programming",
+      "reinforcement-learning",
+      "benchmarking",
+      "time-series",
+      "python",
+      "reproducible-research",
+      "backtesting",
+      "uncertainty-quantification",
+      "data-provenance",
+      "wholesale-electricity"
+    ],
+    "source_paths": [
+      "README.md",
+      "requirements.txt",
+      "voltrl.py",
+      "voltrl_benchmark.py",
+      "input_provenance.py",
+      "data/README.md",
+      "data/opsd_source.json",
+      "experiment_contract.py",
+      "historical_forecast_contract.py",
+      "result_bundle_audit.py",
+      "tests/test_experiment_contract.py"
+    ],
+    "is_fork": false,
+    "upstream": null
+  },
+  "domain": {
+    "id": "C",
+    "name": "Markets and software",
+    "primary": "#FFAB00",
+    "secondary": "#448AFF",
+    "surface": "#161B22",
+    "glow": "rgba(255,171,0,0.35)"
+  },
+  "model": {
+    "title": "Arbitrage assumptions · synthetic friction screen",
+    "timeUnit": "h",
+    "horizon": 24,
+    "parameters": [
+      {
+        "key": "baseSpreadBps",
+        "label": "Base spread",
+        "unit": "bps",
+        "min": 0,
+        "max": 100,
+        "step": 1,
+        "default": 40,
+        "calibration": "Illustrative input; verified against the declared analytical model, not field measurements."
+      },
+      {
+        "key": "feeBps",
+        "label": "Round-trip fees",
+        "unit": "bps",
+        "min": 0,
+        "max": 50,
+        "step": 1,
+        "default": 10,
+        "calibration": "Illustrative input; verified against the declared analytical model, not field measurements."
+      },
+      {
+        "key": "slippageBps",
+        "label": "Slippage estimate",
+        "unit": "bps",
+        "min": 0,
+        "max": 30,
+        "step": 1,
+        "default": 5,
+        "calibration": "Illustrative input; verified against the declared analytical model, not field measurements."
+      },
+      {
+        "key": "notionalUSD",
+        "label": "Scenario notional",
+        "unit": "USD",
+        "min": 1000,
+        "max": 100000,
+        "step": 1000,
+        "default": 10000,
+        "calibration": "Illustrative input; verified against the declared analytical model, not field measurements."
+      }
+    ],
+    "metrics": [
+      {
+        "key": "spreadBps",
+        "label": "Synthetic spread",
+        "unit": "bps",
+        "decimals": 1
+      },
+      {
+        "key": "netEdgeBps",
+        "label": "Net scenario edge",
+        "unit": "bps",
+        "decimals": 1
+      },
+      {
+        "key": "netPnlUSD",
+        "label": "Scenario P&L",
+        "unit": "USD",
+        "decimals": 2
+      },
+      {
+        "key": "costUSD",
+        "label": "Fees and slippage",
+        "unit": "USD",
+        "decimals": 2
+      }
+    ],
+    "equation": "spread = b + 12 sin(2πt/12) + 5 sin(2πt/5); edge = spread − fees − slippage; P&L = notional · edge/10000.",
+    "assumptions": [
+      "All prices, spreads, and returns are synthetic; no exchange or trading API is connected.",
+      "P&L is one hypothetical opportunity at the selected time, not accumulated realized performance.",
+      "Execution latency, inventory, liquidity, funding, and exchange risk are omitted.",
+      "All spreads and notional values are invented; no OPSD file or native benchmark output is loaded by the browser.",
+      "The native project uses finite-state MDP/dynamic-programming methods; this page neither trains deep-RL agents nor counts rainflow cycles.",
+      "The browser omits battery inventory, terminal valuation, market fees beyond the explicit toy inputs, and causal decision timing; it offers no trading-performance conclusion."
+    ],
+    "kind": "markets",
+    "introduction": "This normalized USD/basis-point screen is not VoltRL’s energy-market reward or policy solver. It illustrates why a gross opportunity and its costs must be separated before inspecting the native MWh, efficiency, degradation, and information protocol.",
+    "calibration_status": "Uncalibrated synthetic teaching proxy"
+  },
+  "modules": [
     {
-      "id": "L01",
-      "title": "Day-Ahead Locational Marginal Pricing (LMP) Ingestion & Parse",
-      "level": "Beginner",
-      "duration": "30 mins",
-      "config_file": "configs/lmp_ingest.json",
-      "summary": "Ingest and normalize CAISO/ERCOT/PJM historical 5-minute and hourly clearing price curves, isolating congestion and loss components.",
-      "inputs": [
-        "Historical ISO LMP pricing tables",
-        "Calendar holiday and seasonal index flags"
+      "id": "module-1",
+      "title": "Separate a gross spread from a net result",
+      "objective": "Reconcile a normalized hypothetical opportunity before comparing policies.",
+      "minutes": 12,
+      "steps": [
+        "Read VoltRL’s stated battery, reward, and information conventions.",
+        "Apply a 40 bps base spread, 10 bps fees, 5 bps slippage, and 10,000 USD notional.",
+        "At time zero, calculate net edge and scenario P&L; identify the native energy-market variables absent from this arithmetic."
       ],
-      "parameters": {
-        "PriceCap_USD_MWh": 2000.0,
-        "FloorPrice_USD_MWh": -150.0,
-        "TimeResolution_min": 5
+      "preset": {
+        "baseSpreadBps": 40,
+        "feeBps": 10,
+        "slippageBps": 5,
+        "notionalUSD": 10000
       },
       "checkpoints": [
-        "Validate zero missing timestamp intervals",
-        "Compute daily price spread variance and volatility index"
-      ]
+        {
+          "label": "Initial net edge is 25 bps",
+          "metric": "netEdgeBps",
+          "operator": "==",
+          "expected": 25,
+          "tolerance": 0.02,
+          "atTime": 0
+        },
+        {
+          "label": "Initial hypothetical P&L is 25 USD",
+          "metric": "netPnlUSD",
+          "operator": "==",
+          "expected": 25,
+          "tolerance": 0.02,
+          "atTime": 0
+        }
+      ],
+      "reflection": "Why must a result in basis points of notional not be compared directly with currency per MWh or an annual battery profit?",
+      "source_paths": [
+        "README.md",
+        "voltrl.py"
+      ],
+      "level": "Foundation"
     },
     {
-      "id": "L02",
-      "title": "Dynamic Programming & Mixed-Integer Linear Arbitrage Optimization",
-      "level": "Intermediate",
-      "duration": "45 mins",
-      "config_file": "configs/milp_arbitrage_solver.json",
-      "summary": "Formulate LP/MILP optimization objective maximizing net revenue subject to C-rate limits, round-trip losses, and state-of-charge boundaries.",
-      "inputs": [
-        "24-hour day-ahead forward price vector",
-        "BESS round-trip efficiency = 88%"
+      "id": "module-2",
+      "title": "Find the break-even boundary",
+      "objective": "Show how costs can remove an apparent gross opportunity.",
+      "minutes": 15,
+      "steps": [
+        "Keep base spread at 40 bps and notional at 10,000 USD.",
+        "Raise fees to 25 bps and slippage to 15 bps, predict the time-zero result, then inspect the final synthetic time.",
+        "Read the native degradation-cost conventions and explain why fees, efficiency losses, and aging are separate quantities."
       ],
-      "parameters": {
-        "BatteryCapacity_MWh": 4.0,
-        "MaxPower_MW": 1.0,
-        "MinSOC_pct": 10.0,
-        "MaxSOC_pct": 90.0
+      "preset": {
+        "baseSpreadBps": 40,
+        "feeBps": 25,
+        "slippageBps": 15,
+        "notionalUSD": 10000
       },
       "checkpoints": [
-        "Solve global optimum schedule in < 50 ms via SciPy/HiGHS",
-        "Verify zero simultaneous charge and discharge anomalies"
-      ]
+        {
+          "label": "The opening opportunity is exactly break-even",
+          "metric": "netPnlUSD",
+          "operator": "==",
+          "expected": 0,
+          "tolerance": 0.02,
+          "atTime": 0
+        },
+        {
+          "label": "Final synthetic opportunity is negative",
+          "metric": "netPnlUSD",
+          "operator": "<",
+          "expected": 0,
+          "tolerance": 0.02,
+          "atTime": 24
+        }
+      ],
+      "reflection": "Which costs are modeled natively, and which remain omitted from the price-taking benchmark?",
+      "source_paths": [
+        "README.md",
+        "voltrl.py",
+        "voltrl_benchmark.py"
+      ],
+      "level": "Parameter study"
     },
     {
-      "id": "L03",
-      "title": "Degradation-Aware Rainflow Cost Penalty Integration",
-      "level": "Advanced",
-      "duration": "60 mins",
-      "config_file": "configs/degradation_penalty.json",
-      "summary": "Augment objective function with nonlinear marginal cycle-aging cost ($/cycle-depth) calculated via Rainflow cycle counting.",
-      "inputs": [
-        "Lithium-ion replacement cost ($110/kWh)",
-        "Empirical DoD vs cycle life curve"
+      "id": "module-3",
+      "title": "Protect the information boundary",
+      "objective": "Explain why a policy may not use future realized prices just because a plot displays them.",
+      "minutes": 18,
+      "steps": [
+        "Reduce base spread to 20 bps while retaining the 25/15 bps cost assumptions.",
+        "Inspect the time-zero and 24-hour points; remember these are two separate hypothetical opportunities, not accumulated P&L.",
+        "Read the historical 24-hour block protocol and distinguish a causal schedule from the perfect-foresight upper bound."
       ],
-      "parameters": {
-        "BatteryPackCapex_USD": 440000,
-        "DegradationPenaltyWeight": 1.15,
-        "RainflowThreshold_DoD": 0.05
+      "preset": {
+        "baseSpreadBps": 20,
+        "feeBps": 25,
+        "slippageBps": 15,
+        "notionalUSD": 10000
       },
       "checkpoints": [
-        "Observe reduction in micro-cycling under shallow price spreads",
-        "Achieve 32% increase in battery asset lifetime net present value (NPV)"
-      ]
+        {
+          "label": "Opening net edge is negative 20 bps",
+          "metric": "netEdgeBps",
+          "operator": "==",
+          "expected": -20,
+          "tolerance": 0.02,
+          "atTime": 0
+        },
+        {
+          "label": "Final scenario P&L under the declared costs",
+          "metric": "netPnlUSD",
+          "operator": "==",
+          "expected": -24.755283,
+          "tolerance": 0.02,
+          "atTime": 24
+        }
+      ],
+      "reflection": "What timestamp and training/holdout checks would reveal an optimistic result caused by information leakage?",
+      "source_paths": [
+        "historical_forecast_contract.py",
+        "voltrl_benchmark.py",
+        "tests/test_experiment_contract.py"
+      ],
+      "level": "Stress test"
     },
     {
-      "id": "L04",
-      "title": "Real-Time Price Spike Dispatch & State-of-Charge Buffer Protection",
-      "level": "Production",
-      "duration": "75 mins",
-      "config_file": "configs/realtime_rl_policy.json",
-      "summary": "Deploy deep Q-learning / PPO agent trained in Gym environment to capture unexpected 15-minute price spikes without stranding SOC.",
-      "inputs": [
-        "Streaming 5-minute real-time market telemetry",
-        "State vector: [SOC, Current_Price, Trend, Hour]"
+      "id": "module-4",
+      "title": "Assemble a reproducible benchmark claim",
+      "objective": "Tie a comparison to its data source, source revision, protocol, and metric definitions.",
+      "minutes": 18,
+      "steps": [
+        "Apply a 55 bps base spread, 20 bps fees, 10 bps slippage, and 20,000 USD notional.",
+        "Run to 24 hours and export the synthetic assumptions without describing the result as an energy-market backtest.",
+        "Read the OPSD provenance record and the result-bundle audit; list the checks needed before quoting a native policy comparison."
       ],
-      "parameters": {
-        "ExplorationEpsilon": 0.05,
-        "DiscountFactor_Gamma": 0.99,
-        "EmergencyBuffer_SOC_pct": 15.0
+      "preset": {
+        "baseSpreadBps": 55,
+        "feeBps": 20,
+        "slippageBps": 10,
+        "notionalUSD": 20000
       },
       "checkpoints": [
-        "Outperform standard heuristic threshold benchmark by 18.4%",
-        "Zero penalty penalties incurred from unfulfilled dispatch instructions"
-      ]
+        {
+          "label": "Declared fees and slippage total 60 USD",
+          "metric": "costUSD",
+          "operator": "==",
+          "expected": 60,
+          "tolerance": 0.02,
+          "atTime": 24
+        },
+        {
+          "label": "Final hypothetical opportunity P&L",
+          "metric": "netPnlUSD",
+          "operator": "==",
+          "expected": 40.489435,
+          "tolerance": 0.02,
+          "atTime": 24
+        }
+      ],
+      "reflection": "How would you report a perfect-foresight benchmark, a synthetic policy result, and an audited historical result without conflating their evidential strength?",
+      "source_paths": [
+        "data/README.md",
+        "data/opsd_source.json",
+        "input_provenance.py",
+        "result_bundle_audit.py"
+      ],
+      "level": "Transfer to source"
     }
-  ]
+  ],
+  "source": {
+    "commit": "c86bf0e52adf06922bbbf35f2274b68485a22660",
+    "audited_at": "2026-10-19T08:39:24Z",
+    "url": "https://github.com/mohammadrezwankhan/voltrl/tree/c86bf0e52adf06922bbbf35f2274b68485a22660",
+    "calibration_status": "synthetic-analytical-fixtures",
+    "scope": "This browser lab is a standalone teaching approximation. Use the linked source for the project implementation."
+  },
+  "dashboard_url": "https://mohammadrezwankhan.github.io/voltrl/"
 }

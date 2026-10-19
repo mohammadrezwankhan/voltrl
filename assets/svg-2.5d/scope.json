@@ -1,0 +1,10 @@
+{
+  "repository": "voltrl",
+  "diagrams": [
+    "diagrams/battery-arbitrage-state-machine.svg"
+  ],
+  "fidelity": {
+    "diagrams/battery-arbitrage-state-machine.svg": "Conceptual bounded charge/idle/discharge abstraction; not the full DP, MILP, or RL method."
+  },
+  "reason": "Finite-state benchmark teaching aid with bounded SOC guards; not the full RL/optimization method."
+}
