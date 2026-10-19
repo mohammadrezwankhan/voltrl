@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "repository": "voltrl",
+  "preserved_current_commit": "49e928540d0d5be94c92559d96034f03589e35db",
+  "animations": [
+    {
+      "kind": "image",
+      "title": "Original floating-layer SVG",
+      "badge": "Earlier animated media",
+      "description": "Floating isometric tiers, pulsing circuits, and flowing dashed traces from the earlier repository hero.",
+      "format": "Animated SVG",
+      "preview": "media/hero-25d-4b95f8bed2bd.svg",
+      "preview_sha256": "39006b28d7e86d1316fb7c150b88997d27b61e85d9fed436d15770a2ce2c3f84",
+      "motion_identity": "4b95f8bed2bdcbc3b7affb41d9381c87dd16bb5bf31add09b1a8f1ff0c9a032f",
+      "sources": [
+        {
+          "path": "assets/hero-25d.svg",
+          "commit": "ece67be1cc14fa8b048ad081ce41e565ce0ff5eb",
+          "sha256": "1ba3a28f6a4d6cb337b619847dfc87fe9db1db6e9ac96bd2e1d67c1600468623",
+          "blob": "2ea76a98a4e59f856d62d7092bf3ffec30168cc3",
+          "url": "https://github.com/mohammadrezwankhan/voltrl/blob/ece67be1cc14fa8b048ad081ce41e565ce0ff5eb/assets/hero-25d.svg"
+        },
+        {
+          "path": "assets/hero-25d.svg",
+          "commit": "5f1d83f10301baa144f0f08dfe0cb781fb8d2f78",
+          "sha256": "b7d64cb63dfe816510355fec6a77ec64f097c783db05a8553edf1adf6a4be69b",
+          "blob": "e9575e79e719b34add721274e67d6410586f7874",
+          "url": "https://github.com/mohammadrezwankhan/voltrl/blob/5f1d83f10301baa144f0f08dfe0cb781fb8d2f78/assets/hero-25d.svg"
+        }
+      ]
+    },
+    {
+      "kind": "waveform",
+      "title": "Original interactive waveform",
+      "badge": "Previous dashboard animation",
+      "description": "The earlier 2.5D perspective card and its moving waveform, with the original visual formulas and sliders.",
+      "preview": "waveform.html",
+      "preview_sha256": "6e9f1f90893b9bfe451e7fc85d0572db18a73d864d488ccc9516f91a41c146f4",
+      "sources": [
+        {
+          "path": "docs/index.html",
+          "commit": "ece67be1cc14fa8b048ad081ce41e565ce0ff5eb",
+          "blob": "838d10a36269a5f66707143f2bad6c3a8cf124fa",
+          "sha256": "cd749e51dca938ae839ce5ba7301da6a024694de1100a111f1e4771f45233f89",
+          "url": "https://github.com/mohammadrezwankhan/voltrl/blob/ece67be1cc14fa8b048ad081ce41e565ce0ff5eb/docs/index.html"
+        },
+        {
+          "path": "docs/index.html",
+          "commit": "5f1d83f10301baa144f0f08dfe0cb781fb8d2f78",
+          "blob": "a278e177795ebfe3af9e579e6f015177aef148ed",
+          "sha256": "86349f0ea1ab83f45d0611c0dd72a7f321625ad8ef758b335d10d7e917315ab2",
+          "url": "https://github.com/mohammadrezwankhan/voltrl/blob/5f1d83f10301baa144f0f08dfe0cb781fb8d2f78/docs/index.html"
+        }
+      ]
+    }
+  ],
+  "native_links": [],
+  "historical_source_links": []
+}
