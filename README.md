@@ -7,10 +7,8 @@
 **Algorithmic Arbitrage, Degradation-Aware DP & Wholesale Nodal Optimization**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-00E5FF.svg?style=for-the-badge&logo=opensourceinitiative&logoColor=white)](LICENSE)
-[![Domain](https://img.shields.io/badge/Domain-Full-Stack_-_FinTech_-_Energy_Markets_-_EdTech-FFAB00.svg?style=for-the-badge)](https://github.com/mohammadrezwankhan)
 [![Interactive Dashboard](https://img.shields.io/badge/Interactive_Dashboard-Live_on_Pages-00E676.svg?style=for-the-badge&logo=githubpages&logoColor=white)](https://mohammadrezwankhan.github.io/voltrl/)
 [![Lessons](https://img.shields.io/badge/Lessons_Configured-04_Modules-B388FF.svg?style=for-the-badge)](docs/lesson-config.json)
-[![Star Velocity](https://img.shields.io/badge/Target-5000%2B_Stars-FFAB00.svg?style=for-the-badge&logo=starship&logoColor=black)](#star-history)
 
 <p align="center">
   <a href="https://mohammadrezwankhan.github.io/voltrl/"><strong>Explore Live 2.5D Dashboard &rarr;</strong></a> ·
