@@ -1,0 +1,94 @@
+{
+  "repository": "voltrl",
+  "domain": "DOMAIN_C",
+  "title": "VoltRL: Battery Arbitrage Benchmark",
+  "version": "2.0.0",
+  "author": "Mohammad Rezwan Khan",
+  "lessons": [
+    {
+      "id": "L01",
+      "title": "Day-Ahead Locational Marginal Pricing (LMP) Ingestion & Parse",
+      "level": "Beginner",
+      "duration": "30 mins",
+      "config_file": "configs/lmp_ingest.json",
+      "summary": "Ingest and normalize CAISO/ERCOT/PJM historical 5-minute and hourly clearing price curves, isolating congestion and loss components.",
+      "inputs": [
+        "Historical ISO LMP pricing tables",
+        "Calendar holiday and seasonal index flags"
+      ],
+      "parameters": {
+        "PriceCap_USD_MWh": 2000.0,
+        "FloorPrice_USD_MWh": -150.0,
+        "TimeResolution_min": 5
+      },
+      "checkpoints": [
+        "Validate zero missing timestamp intervals",
+        "Compute daily price spread variance and volatility index"
+      ]
+    },
+    {
+      "id": "L02",
+      "title": "Dynamic Programming & Mixed-Integer Linear Arbitrage Optimization",
+      "level": "Intermediate",
+      "duration": "45 mins",
+      "config_file": "configs/milp_arbitrage_solver.json",
+      "summary": "Formulate LP/MILP optimization objective maximizing net revenue subject to C-rate limits, round-trip losses, and state-of-charge boundaries.",
+      "inputs": [
+        "24-hour day-ahead forward price vector",
+        "BESS round-trip efficiency = 88%"
+      ],
+      "parameters": {
+        "BatteryCapacity_MWh": 4.0,
+        "MaxPower_MW": 1.0,
+        "MinSOC_pct": 10.0,
+        "MaxSOC_pct": 90.0
+      },
+      "checkpoints": [
+        "Solve global optimum schedule in < 50 ms via SciPy/HiGHS",
+        "Verify zero simultaneous charge and discharge anomalies"
+      ]
+    },
+    {
+      "id": "L03",
+      "title": "Degradation-Aware Rainflow Cost Penalty Integration",
+      "level": "Advanced",
+      "duration": "60 mins",
+      "config_file": "configs/degradation_penalty.json",
+      "summary": "Augment objective function with nonlinear marginal cycle-aging cost ($/cycle-depth) calculated via Rainflow cycle counting.",
+      "inputs": [
+        "Lithium-ion replacement cost ($110/kWh)",
+        "Empirical DoD vs cycle life curve"
+      ],
+      "parameters": {
+        "BatteryPackCapex_USD": 440000,
+        "DegradationPenaltyWeight": 1.15,
+        "RainflowThreshold_DoD": 0.05
+      },
+      "checkpoints": [
+        "Observe reduction in micro-cycling under shallow price spreads",
+        "Achieve 32% increase in battery asset lifetime net present value (NPV)"
+      ]
+    },
+    {
+      "id": "L04",
+      "title": "Real-Time Price Spike Dispatch & State-of-Charge Buffer Protection",
+      "level": "Production",
+      "duration": "75 mins",
+      "config_file": "configs/realtime_rl_policy.json",
+      "summary": "Deploy deep Q-learning / PPO agent trained in Gym environment to capture unexpected 15-minute price spikes without stranding SOC.",
+      "inputs": [
+        "Streaming 5-minute real-time market telemetry",
+        "State vector: [SOC, Current_Price, Trend, Hour]"
+      ],
+      "parameters": {
+        "ExplorationEpsilon": 0.05,
+        "DiscountFactor_Gamma": 0.99,
+        "EmergencyBuffer_SOC_pct": 15.0
+      },
+      "checkpoints": [
+        "Outperform standard heuristic threshold benchmark by 18.4%",
+        "Zero penalty penalties incurred from unfulfilled dispatch instructions"
+      ]
+    }
+  ]
+}
