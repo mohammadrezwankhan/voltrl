@@ -164,6 +164,17 @@ SHA-256 checksum are recorded in [`data/README.md`](data/README.md) and the
 machine-readable [`data/opsd_source.json`](data/opsd_source.json). The benchmark
 verifies the source filename and checksum before parsing any market data.
 
+### Full Git history for committed-result provenance
+
+For strict verification of the committed revision-2 result bundles, use a complete Git clone:
+
+```powershell
+git clone https://github.com/mohammadrezwankhan/voltrl.git
+cd voltrl
+```
+
+Use the default full-history clone; do not add `--depth`. A source archive or shallow clone may run parts of the project, but it may omit historical Git objects that `software_provenance.py` reads to verify the commits recorded in clean result manifests. The input file checksum check in `input_provenance.py` is separate and remains unchanged. The standalone browser lesson can still be opened from an archive.
+
 ## Reproduce the revised benchmark
 
 ```powershell
