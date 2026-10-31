@@ -1,5 +1,5 @@
 numpy==2.5.4
-pandas==3.0.6
+pandas==3.1.0
 matplotlib==3.11.2
 python-docx==1.2.0
 latex2mathml==3.81.1
