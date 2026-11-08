@@ -1,3 +1,15 @@
+<!-- repository-presentation:start -->
+
+![VoltRL — project overview](https://raw.githubusercontent.com/mohammadrezwankhan/mohammadrezwankhan/main/assets/makeover/social/voltrl.png)
+
+Compare finite-state battery-arbitrage policies under explicit synthetic and historical day-ahead information protocols.
+
+[Environment](#environment) · [Reproduce the benchmark](#reproduce-the-revised-benchmark) · [Benchmark source](voltrl_benchmark.py) · [Result evidence](#outputs) · [Limits](#scope-and-limitations)
+
+---
+
+<!-- repository-presentation:end -->
+
 ![VoltRL Arbitrage Evidence Lab: original vector system illustration](assets/hero-25d.svg)
 
 VoltRL compares finite-state battery policies under synthetic prices and a documented historical day-ahead protocol. The browser isolates a generic friction calculation before the native inventory, aging, and information constraints.
