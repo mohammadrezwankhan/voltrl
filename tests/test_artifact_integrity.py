@@ -96,6 +96,15 @@ class ArtifactIntegrityTests(unittest.TestCase):
         ):
             verify_artifact_manifest(self.manifest_path)
 
+    def test_manifest_rejects_noncanonical_output_path_aliases(self):
+        for path in ("./metrics.csv", "metrics//result.csv", "metrics/./result.csv", "."):
+            with self.subTest(path=path):
+                self.manifest_path.write_text(
+                    json.dumps({"outputs": [path]}), encoding="utf-8"
+                )
+                with self.assertRaisesRegex(ValueError, "canonical relative paths"):
+                    verify_artifact_manifest(self.manifest_path)
+
     def test_incomplete_inventory_is_reported(self):
         inventory = build_artifact_inventory(self.result_dir, self.outputs[:1])
         self.manifest_path.write_text(
