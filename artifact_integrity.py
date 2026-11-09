@@ -96,7 +96,12 @@ def _declared_outputs(manifest: dict[str, object]) -> list[str]:
         if "\\" in item:
             raise ValueError("manifest outputs must use POSIX-style paths")
         path = PurePosixPath(item)
-        if path.is_absolute() or ".." in path.parts:
+        if (
+            path.is_absolute()
+            or ".." in path.parts
+            or not path.parts
+            or path.as_posix() != item
+        ):
             raise ValueError("manifest outputs must be canonical relative paths")
     if len(outputs) != len(set(outputs)):
         raise ValueError("manifest outputs contain duplicate paths")
