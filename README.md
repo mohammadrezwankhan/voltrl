@@ -10,7 +10,7 @@ Compare finite-state battery-arbitrage policies under explicit synthetic and his
 
 <!-- repository-presentation:end -->
 
-![VoltRL Arbitrage Evidence Lab: original vector system illustration](assets/hero-25d.svg)
+![VoltRL Arbitrage Evidence Lab: original vector system illustration](assets/brand-uniformity/hero-25d.svg)
 
 VoltRL compares finite-state battery policies under synthetic prices and a documented historical day-ahead protocol. The browser isolates a generic friction calculation before the native inventory, aging, and information constraints.
 
@@ -35,7 +35,7 @@ The browser lab runs offline with no packages, accounts, or live data feeds. Its
 <details>
 <summary>System topology and model boundaries</summary>
 
-![Battery arbitrage state machine](assets/svg-2.5d/diagrams/battery-arbitrage-state-machine.svg)
+![Battery arbitrage state machine](assets/brand-uniformity/svg-2.5d/diagrams/battery-arbitrage-state-machine.svg)
 
 Conceptual bounded charge/idle/discharge abstraction; not the full DP, MILP, or RL method.
 
