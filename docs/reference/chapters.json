@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "repository": "mohammadrezwankhan/voltrl",
+  "source_sha": "8058e89e4d3516825a400fe86ac45d2e36b6bef0",
+  "reviewed": "2026-11-19",
+  "title": "VoltRL source and evidence handbook",
+  "chapters": [
+    {
+      "path": "docs/INDEX.md",
+      "label": "Start here",
+      "group": "Guide"
+    },
+    {
+      "path": "docs/developer/ARCHITECTURE.md",
+      "label": "Architecture",
+      "group": "Developer"
+    },
+    {
+      "path": "docs/developer/SETUP_AND_REPRODUCIBILITY.md",
+      "label": "Setup and reproducibility",
+      "group": "Developer"
+    },
+    {
+      "path": "docs/developer/API_CLI_AND_INTERFACES.md",
+      "label": "API and CLI contracts",
+      "group": "Developer"
+    },
+    {
+      "path": "docs/developer/API_REFERENCE.md",
+      "label": "Native declaration catalog",
+      "group": "Developer"
+    },
+    {
+      "path": "docs/developer/WORKED_EXAMPLES_AND_LABS.md",
+      "label": "Worked examples",
+      "group": "Developer"
+    },
+    {
+      "path": "docs/developer/TROUBLESHOOTING.md",
+      "label": "Troubleshooting",
+      "group": "Developer"
+    },
+    {
+      "path": "docs/developer/BROWSER_MODEL_CATALOG.md",
+      "label": "Browser model catalog",
+      "group": "Developer"
+    },
+    {
+      "path": "docs/math-and-physics/EQUATIONS_AND_DERIVATIONS.md",
+      "label": "Equations and derivations",
+      "group": "Scientific reference"
+    },
+    {
+      "path": "docs/math-and-physics/PARAMETERS_AND_SYMBOLS.md",
+      "label": "Parameters and symbols",
+      "group": "Scientific reference"
+    },
+    {
+      "path": "docs/math-and-physics/ASSUMPTIONS_AND_LIMITS.md",
+      "label": "Assumptions and limits",
+      "group": "Scientific reference"
+    },
+    {
+      "path": "docs/maintainer/VERIFICATION_EVIDENCE_LEDGER.md",
+      "label": "Verification evidence",
+      "group": "Maintainer"
+    },
+    {
+      "path": "docs/maintainer/CI_CD_AND_RELEASE_PLAYBOOK.md",
+      "label": "CI and publication",
+      "group": "Maintainer"
+    },
+    {
+      "path": "docs/maintainer/TOOLCHAIN_AND_DEPENDENCY_MATRIX.md",
+      "label": "Toolchain matrix",
+      "group": "Maintainer"
+    },
+    {
+      "path": "docs/maintainer/FAILURE_MODES_AND_TECH_DEBT.md",
+      "label": "Failure modes and debt",
+      "group": "Maintainer"
+    },
+    {
+      "path": "docs/maintainer/DOCS_MAINTENANCE_RUNBOOK.md",
+      "label": "Docs maintenance",
+      "group": "Maintainer"
+    },
+    {
+      "path": "docs/owner/ADR/ADR-0000-INDEX.md",
+      "label": "Decision records",
+      "group": "Owner"
+    },
+    {
+      "path": "docs/owner/GOVERNANCE_AND_SCOPE.md",
+      "label": "Governance and scope",
+      "group": "Owner"
+    },
+    {
+      "path": "docs/owner/BUS_FACTOR_RECOVERY_RUNBOOK.md",
+      "label": "Recovery runbook",
+      "group": "Owner"
+    },
+    {
+      "path": "docs/owner/PORTFOLIO_INTEGRATION.md",
+      "label": "Portfolio integration",
+      "group": "Owner"
+    },
+    {
+      "path": "ROADMAP.md",
+      "label": "Twelve-month roadmap",
+      "group": "Planning and policies"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "label": "Changelog",
+      "group": "Planning and policies"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "label": "Contributing",
+      "group": "Planning and policies"
+    },
+    {
+      "path": "SECURITY.md",
+      "label": "Security reporting",
+      "group": "Planning and policies"
+    },
+    {
+      "path": "CITATION.cff",
+      "label": "Citation metadata",
+      "group": "Planning and policies"
+    },
+    {
+      "path": "docs/SOURCE_EVIDENCE.md",
+      "label": "Source coverage ledger",
+      "group": "Evidence"
+    }
+  ]
+}
