@@ -296,3 +296,19 @@ The software is released under the MIT License. Historical prices retain the
 terms stated by Open Power System Data and its upstream providers.
 
 </details>
+
+
+## Source and evidence handbook — 2026-11-19
+
+**[Native handbook](docs/INDEX.md) · [Static reading view](docs/reference/index.html) · [Equations and units](docs/math-and-physics/EQUATIONS_AND_DERIVATIONS.md) · [API/CLI](docs/developer/API_CLI_AND_INTERFACES.md) · [Verification limits](docs/maintainer/VERIFICATION_EVIDENCE_LEDGER.md) · [Roadmap](ROADMAP.md)**
+
+This documentation snapshot reviews source `8058e89e4d3516825a400fe86ac45d2e36b6bef0`. The project guide above is preserved. The handbook adds several precision notes for interpreting it:
+
+- The legacy CLI and the current benchmark use different defaults and selection methods; the revised study is driven by `voltrl_benchmark.py`.
+- The nominal 100 MW defines an internal SOC step; inefficient charging requires more grid energy. Nonlinear aging is an absolute-SOC DOD potential plus stress, without rainflow cycles or physical capacity fade.
+- Historical preparation interpolates gaps before splitting. Recorded forecast availability is a prior delivery timestamp; no actual exchange auction/publication calendar is modeled.
+- Stored synthetic figures use illustrative currency units. Historical DK1/DK2 prices have separate OPSD provenance; the browser proxy uses USD/bps. These are distinct quantities.
+- The experiment contract checks selected-bin/fold consistency, not a recomputed NLL optimum or interior optimum. The statistics contract recomputes summaries but only sanity-checks bootstrap intervals. Software provenance defaults to three files at the recorded historical commit.
+- Both stored bundles passed their applicable local audits, and 80 existing unit tests passed on the reviewed implementation. The full external-data benchmark, candidate CI, guarded merge and updated live publication are separate outcomes.
+
+See the [assumptions](docs/math-and-physics/ASSUMPTIONS_AND_LIMITS.md), [source coverage](docs/SOURCE_EVIDENCE.md), [security reporting](SECURITY.md) and [recovery runbook](docs/owner/BUS_FACTOR_RECOVERY_RUNBOOK.md). This package preserves native code, workflows, dependencies, original result files, citation and license.
