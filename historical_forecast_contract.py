@@ -18,6 +18,8 @@ SUMMARY_FILE = "historical_forecast_summary.csv"
 MARKET_FILE = "real_market_metrics.csv"
 REQUIRED_OUTPUTS = (DETAIL_FILE, SUMMARY_FILE, MARKET_FILE)
 EXPECTED_LEADS = frozenset(range(1, 25))
+ORACLE_POLICY = "Perfect-foresight upper bound"
+ORACLE_PROTOCOL = "perfect foresight over the holdout (diagnostic only)"
 
 
 @dataclass(frozen=True)
@@ -431,7 +433,11 @@ def _validate_market_linkage(
         if hours < 1:
             errors.append(f"{label} test_hours must be positive")
         market_hours[case].add(hours)
-        market_protocols[case].add(protocol)
+        if protocol == ORACLE_PROTOCOL:
+            if row.get("policy") != ORACLE_POLICY:
+                errors.append(f"{label} diagnostic protocol is reserved for the oracle")
+        else:
+            market_protocols[case].add(protocol)
 
     detail_cases = {case for case, _ in groups}
     market_cases = set(market_hours)
@@ -508,7 +514,7 @@ def _audit_historical_forecasts(
     )
     market_rows = _read_table(
         result_dir / MARKET_FILE,
-        ("case", "test_hours", "information_protocol"),
+        ("case", "policy", "test_hours", "information_protocol"),
         errors,
     )
 

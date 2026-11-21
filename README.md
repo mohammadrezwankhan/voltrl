@@ -91,7 +91,8 @@ VoltRL is a research benchmark for finite-state battery-arbitrage control under
 two explicit information protocols. Synthetic prices are revealed sequentially
 and support a price-only versus price-plus-hour state ablation. Historical DK1
 and DK2 day-ahead prices are evaluated using one 24-hour schedule fixed before
-each delivery day; realized prices are used only for settlement. VoltRL is a
+each UTC delivery day. The schedules use history through the previous UTC day,
+and delivery-day prices settle the committed quantities. VoltRL is a
 **benchmark, not a deployment or live bidding system**.
 
 Public repository: <https://github.com/mohammadrezwankhan/voltrl>
@@ -110,8 +111,8 @@ Public repository: <https://github.com/mohammadrezwankhan/voltrl>
 VoltRL is an auditable research benchmark under two explicit information
 protocols, not a live-trading or deployment system. Across 30 regenerated
 synthetic datasets, seasonal autoregressive (SARX) 24-hour MPC has the highest
-mean annualized adjusted profit (EUR 5.13M; 95% bootstrap CI EUR 5.05–5.23M),
-versus EUR 4.62M for the hour-aware finite-horizon MDP (EUR 4.51–4.73M).
+mean annualized adjusted profit (5.13M currency units, 95% bootstrap CI 5.05–5.23M),
+versus 4.62M for the hour-aware finite-horizon MDP (4.51–4.73M).
 Historical DK1/DK2 schedules are fixed before delivery and use realized prices
 only for settlement; SARX reports EUR 0.129M and EUR 0.187M annualized adjusted
 profit, respectively, after modeled degradation. These protocol-bound results
@@ -169,9 +170,11 @@ tests whenever Python sources or dependencies change.
 
 Download `time_series_60min_singleindex.csv` from the official
 [OPSD 2020-10-06 package](https://data.open-power-system-data.org/time_series/2020-10-06/).
-The pipeline reads `DK_1_price_day_ahead` and `DK_2_price_day_ahead`. Twelve
-internal missing hours per zone (0.024%, spring clock changes) are linearly
-interpolated and reported in `data_quality.csv`. The exact local filename and
+The pipeline reads `DK_1_price_day_ahead` and `DK_2_price_day_ahead`. The archived
+protocol linearly interpolates 12 missing hours per zone (0.024%) before the
+split and reports them in `data_quality.csv`. Linear interpolation uses both
+neighboring prices, so an imputed value can depend on a later delivery timestamp.
+The exact local filename and
 SHA-256 checksum are recorded in [`data/README.md`](data/README.md) and the
 machine-readable [`data/opsd_source.json`](data/opsd_source.json). The benchmark
 verifies the source filename and checksum before parsing any market data.
@@ -195,13 +198,13 @@ python input_provenance.py `
 
 python voltrl_benchmark.py `
   --opsd-csv data\opsd_time_series_60min_singleindex_2020-10-06.csv `
-  --output-dir results_revision2 `
+  --output-dir results_revision2_replay `
   --synthetic-seeds 30 `
   --synthetic-hours 17520 `
   --candidates 4,6,8,10,12,16,20,24,32,40,48
 
 python -m unittest discover -s tests -v
-python result_bundle_audit.py results_revision2\experiment_manifest.json
+python result_bundle_audit.py results_revision2_replay\experiment_manifest.json
 ```
 
 The upper resolution is 48 rather than 12. Transition rows use hierarchical
@@ -210,7 +213,8 @@ candidate.
 
 ## Main conventions
 
-- Battery: 500 MWh capacity and 100 MW one-hour charge/discharge step.
+- The 500 MWh battery uses a 100 MWh internal SOC step per hour. With 0.95
+  charge efficiency, a full step draws about 105.263 MWh at the grid connection.
 - Main one-way charge/discharge efficiency: 0.95 (90.25% round trip).
 - Main aging cost: 5 currency units/MWh nominal full-cycle normalization, 25%
   linear throughput component, DOD exponent 1.6, and quadratic SOC stress.
@@ -219,11 +223,14 @@ candidate.
   holdout.
 - Primary planner discount: 1.0; terminal SOC is valued at the training-median
   price with discharge efficiency applied.
-- Historical actions are fixed as a complete 24-hour vector before the
-  delivery day. The price-taking abstraction assumes accepted fixed quantities
-  and still omits bid curves, fees, imbalance, and market impact.
-- Perfect foresight is a diagnostic upper bound and is never available to any
-  causal policy.
+- Historical actions are fixed as a 24-hour vector using prices through the
+  previous UTC day. This is a pre-delivery scheduling experiment. The model does
+  not align its information set or delivery blocks to the [Nord Pool Nordic auction gate](https://support.nordpoolgroup.com/support/solutions/articles/8000077444-about-the-day-ahead-auction-in-nordics-baltics)
+  at noon CET on the preceding day. It assumes accepted fixed quantities and
+  omits bid curves, fees, imbalance, and market impact.
+- The perfect-foresight row is an ex-post upper bound computed with the entire
+  holdout price path. Archived historical CSVs share one protocol label across
+  rows, including the oracle. New runs label the oracle separately.
 
 ## Outputs
 
@@ -242,7 +249,7 @@ candidate/fold grid, selected-bin diagnostics, chronological split sizes, and
 reported sample counts. The synthetic statistics contract recomputes every
 policy mean, sample standard deviation, mean oracle efficiency, paired mean,
 positive-seed fraction, and annualized seed result from the underlying rows;
-it also checks confidence-interval ordering and coverage of each reported mean.
+it also recomputes both endpoints of the deterministic percentile bootstrap intervals.
 The historical forecast contract then reconstructs
 forecast errors and summary metrics from all timestamped rows, checks that each
 24-hour block uses only information available before delivery, and confirms

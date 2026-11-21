@@ -16,6 +16,15 @@ DEFAULT_SOFTWARE_PATHS = (
     "voltrl_benchmark.py",
     "requirements.txt",
 )
+BENCHMARK_SOFTWARE_PATHS = DEFAULT_SOFTWARE_PATHS + (
+    "artifact_integrity.py",
+    "experiment_contract.py",
+    "historical_forecast_contract.py",
+    "input_provenance.py",
+    "result_bundle_audit.py",
+    "software_provenance.py",
+    "synthetic_statistics_contract.py",
+)
 GIT_COMMIT_PATTERN = re.compile(r"[0-9a-f]{40,64}")
 SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
 

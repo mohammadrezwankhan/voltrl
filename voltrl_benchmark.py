@@ -28,8 +28,9 @@ import numpy as np
 import pandas as pd
 
 from artifact_integrity import build_artifact_inventory
+from historical_forecast_contract import ORACLE_POLICY, ORACLE_PROTOCOL
 from input_provenance import DEFAULT_SOURCE_RECORD, verify_source_file
-from software_provenance import capture_software_provenance
+from software_provenance import BENCHMARK_SOFTWARE_PATHS, capture_software_provenance
 from voltrl import (
     ACTION_NAMES,
     Action,
@@ -51,7 +52,7 @@ POLICY_PRICE = "Price-only finite-horizon MDP"
 POLICY_MPC = "Seasonal autoregressive 24-hour MPC"
 POLICY_THRESHOLD = "Training-quantile threshold"
 POLICY_IDLE = "Idle"
-POLICY_ORACLE = "Perfect-foresight upper bound"
+POLICY_ORACLE = ORACLE_POLICY
 POLICY_BLOCK = "SARX day-ahead block DP"
 POLICY_BLOCK_SEASONAL = "Seasonal-mean day-ahead block DP"
 POLICY_BLOCK_PERSISTENCE = "Previous-day persistence block DP"
@@ -796,7 +797,7 @@ def day_ahead_block_trajectory(
                         if start == 0
                         else test_clean["timestamp"].iloc[start - 1]
                     ),
-                    "commitment_protocol": "schedule fixed before delivery-day auction clearing",
+                    "commitment_protocol": "schedule fixed before UTC delivery day",
                     "delivery_timestamp": str(timestamp),
                     "lead_hour": lead,
                     "forecast_price": float(predicted),
@@ -1029,7 +1030,11 @@ def evaluate_day_ahead_case(
             {
                 "case": case,
                 "policy": policy,
-                "information_protocol": "24-hour schedule fixed before delivery day",
+                "information_protocol": (
+                    ORACLE_PROTOCOL
+                    if policy == POLICY_ORACLE
+                    else "24-hour schedule fixed before delivery day"
+                ),
                 "oracle_efficiency_percent": (
                     100.0 * float(metrics["inventory_adjusted_profit"]) / oracle_adjusted
                     if oracle_adjusted > 0
@@ -1291,6 +1296,8 @@ def revision_sensitivity_analysis(
     synthetic_bins: int,
     historical_frame: pd.DataFrame,
     initial_soc_mwh: float,
+    *,
+    sensitivity_seed: int = 42,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Evaluate physical, planner, and degradation-model dependence."""
 
@@ -1302,7 +1309,8 @@ def revision_sensitivity_analysis(
     gamma_rows: list[dict[str, object]] = []
     degradation_rows: list[dict[str, object]] = []
 
-    for case in ("Synthetic seed 42", "DK1 day-ahead block"):
+    synthetic_case = f"Synthetic seed {sensitivity_seed}"
+    for case in (synthetic_case, "DK1 day-ahead block"):
         for eta in (1.00, 0.95, 0.90):
             for degradation in (0.0, 5.0, 15.0):
                 battery = BatterySpec(
@@ -1350,7 +1358,7 @@ def revision_sensitivity_analysis(
             initial_soc_mwh,
             planner_discount=gamma,
         )
-        row.update({"case": "Synthetic seed 42", "planner_discount": gamma})
+        row.update({"case": synthetic_case, "planner_discount": gamma})
         gamma_rows.append(row)
 
     model_specs = (
@@ -1369,7 +1377,7 @@ def revision_sensitivity_analysis(
         ("Nonlinear DOD + SOC stress", primary),
     )
     for label, battery in model_specs:
-        for case in ("Synthetic seed 42", "DK1 day-ahead block"):
+        for case in (synthetic_case, "DK1 day-ahead block"):
             if case.startswith("Synthetic"):
                 row = evaluate_single_policy(
                     synthetic_frame, synthetic_model, battery, initial_soc_mwh
@@ -1492,7 +1500,8 @@ def make_figures(
         )
     axes[1].set_xlabel("Candidate number of price bins")
     axes[1].set_ylabel("Mean validation NLL")
-    axes[1].set_title("B. Synthetic expanding-window model selection (30 seeds)")
+    seed_count = selections["seed"].nunique()
+    axes[1].set_title(f"B. Synthetic expanding-window model selection ({seed_count} seeds)")
     axes[1].legend(frameon=False)
     fig.savefig(figures / "Figure_1_data_and_model_selection.png")
     fig.savefig(figures / "Figure_1_data_and_model_selection.pdf")
@@ -1664,7 +1673,9 @@ def make_figures(
 
 
 def run_benchmark(args: argparse.Namespace) -> dict[str, object]:
-    software_provenance = capture_software_provenance(REPOSITORY_ROOT)
+    software_provenance = capture_software_provenance(
+        REPOSITORY_ROOT, BENCHMARK_SOFTWARE_PATHS
+    )
     output = Path(args.output_dir)
     output.mkdir(parents=True, exist_ok=True)
     candidates = tuple(int(value) for value in args.candidates.split(","))
@@ -1686,7 +1697,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, object]:
     synthetic_metrics_parts: list[pd.DataFrame] = []
     selection_parts: list[pd.DataFrame] = []
     diagnostics: list[dict[str, object]] = []
-    selected_bins: dict[str, int] = {}
+    sensitivity_bins = None
 
     for seed in range(args.synthetic_seeds):
         case = f"Synthetic seed {seed}"
@@ -1701,7 +1712,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, object]:
         diagnostic["seed"] = seed
         diagnostics.append(diagnostic)
         if seed == args.sensitivity_seed:
-            selected_bins["Synthetic seed 42"] = int(diagnostic["selected_bins"])
+            sensitivity_bins = int(diagnostic["selected_bins"])
 
     synthetic_metrics = pd.concat(synthetic_metrics_parts, ignore_index=True)
     synthetic_summary, paired = summarize_seed_results(synthetic_metrics)
@@ -1728,22 +1739,23 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, object]:
     synthetic_sensitivity_frame = generate_synthetic_prices(
         args.synthetic_hours, args.sensitivity_seed
     )
-    if "Synthetic seed 42" not in selected_bins:
+    if sensitivity_bins is None:
         train, _ = chronological_split(synthetic_sensitivity_frame)
-        selected_bins["Synthetic seed 42"], _ = expanding_window_selection(
+        sensitivity_bins, _ = expanding_window_selection(
             train, candidates
         )
     physical_sensitivity, gamma_sensitivity, degradation_sensitivity = (
         revision_sensitivity_analysis(
             synthetic_sensitivity_frame,
-            selected_bins["Synthetic seed 42"],
+            sensitivity_bins,
             market_frames["DK1 day-ahead block"],
             initial_soc,
+            sensitivity_seed=args.sensitivity_seed,
         )
     )
     solver = solver_diagnostics(
         synthetic_sensitivity_frame,
-        selected_bins["Synthetic seed 42"],
+        sensitivity_bins,
     )
 
     outputs = {
@@ -1786,6 +1798,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, object]:
         "synthetic_generator": "voltrl.generate_synthetic_prices",
         "synthetic_seeds": list(range(args.synthetic_seeds)),
         "synthetic_hours_per_seed": args.synthetic_hours,
+        "sensitivity_seed": args.sensitivity_seed,
         "chronological_train_fraction": 0.70,
         "model_selection": "three-fold expanding-window continuous predictive NLL",
         "transition_smoothing": (
@@ -1796,9 +1809,10 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, object]:
         "initial_soc_mwh": initial_soc,
         "primary_planner_discount": 1.0,
         "historical_information_protocol": (
-            "one 24-hour price-independent quantity schedule fixed before each "
-            "UTC delivery day using training-fitted forecasts; actual clearing "
-            "prices used only for settlement"
+            "one 24-hour quantity schedule fixed before each UTC delivery day "
+            "using training-fitted forecasts and price history through the "
+            "previous UTC day; no exchange auction cutoff modeled. Delivery-day "
+            "prices settle committed schedules. The oracle is an ex-post diagnostic."
         ),
         "historical_forecaster": (
             "ridge seasonal autoregression with lags 1, 2, 24, 48, 168 and "

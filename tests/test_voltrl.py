@@ -68,6 +68,11 @@ class VoltRLTests(unittest.TestCase):
         self.assertGreaterEqual(trajectory["soc_after_mwh"].min(), 0.0)
         self.assertLessEqual(trajectory["soc_after_mwh"].max(), 500.0)
 
+    def test_discretizer_rejects_empty_bins_from_tied_prices(self):
+        prices = np.repeat([0.0, 1.0, 2.0, 3.0], [40, 30, 20, 10])
+        with self.assertRaisesRegex(ValueError, "empty bins"):
+            PriceDiscretizer.fit(prices, 4)
+
     def test_perfect_foresight_is_an_upper_bound_after_inventory_adjustment(self):
         prices = np.tile([10.0, 15.0, 100.0, 80.0], 40)
         timestamps = pd.date_range("2025-01-01", periods=len(prices), freq="h")

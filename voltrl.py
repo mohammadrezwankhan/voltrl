@@ -241,10 +241,14 @@ class PriceDiscretizer:
             )
         edges = np.concatenate(([-np.inf], interior, [np.inf])).astype(float)
         labels = np.digitize(x, edges[1:-1], right=False)
+        counts = np.bincount(labels, minlength=n_bins).astype(int)
+        if np.any(counts == 0):
+            raise ValueError(
+                "Quantile boundaries produced empty bins; request fewer price bins."
+            )
         representatives = np.array(
             [float(np.mean(x[labels == k])) for k in range(n_bins)], dtype=float
         )
-        counts = np.bincount(labels, minlength=n_bins).astype(int)
         return cls(edges=edges, representatives=representatives, counts=counts)
 
     def transform(self, prices: Sequence[float]) -> np.ndarray:

@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -13,6 +14,7 @@ from voltrl_benchmark import (
     finite_horizon_policy,
     fit_seasonal_ar,
     fit_state_model,
+    revision_sensitivity_analysis,
     seasonal_ar_forecast,
     simulate_finite_policy,
     trajectory_metrics,
@@ -30,6 +32,18 @@ class VoltRLBenchmarkTests(unittest.TestCase):
         self.assertEqual(model.transition.shape, (24, 4, 4))
         self.assertTrue(np.all(model.transition > 0.0))
         np.testing.assert_allclose(model.transition.sum(axis=2), 1.0, atol=1e-12)
+
+    def test_sensitivity_tables_label_the_requested_seed(self):
+        with (
+            patch("voltrl_benchmark.evaluate_single_policy", side_effect=lambda *a, **k: {}),
+            patch("voltrl_benchmark.evaluate_block_policy", side_effect=lambda *a, **k: {}),
+        ):
+            tables = revision_sensitivity_analysis(
+                self.frame, 4, self.frame, 200.0, sensitivity_seed=7
+            )
+        for table in tables:
+            self.assertIn("Synthetic seed 7", set(table["case"]))
+            self.assertNotIn("Synthetic seed 42", set(table["case"]))
 
     def test_continuous_score_has_full_support_for_extreme_tail(self):
         model = fit_state_model(self.train, n_bins=4, calendar_aware=False)

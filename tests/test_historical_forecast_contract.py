@@ -126,6 +126,20 @@ class HistoricalForecastContractTests(unittest.TestCase):
         )
         self.assertEqual(errors, [])
 
+    def test_oracle_protocol_is_distinct_and_reserved_for_oracle(self):
+        self.market.append({
+            **self.market[0],
+            "policy": "Perfect-foresight upper bound",
+            "information_protocol": "perfect foresight over the holdout (diagnostic only)",
+        })
+        self._write_fixture()
+        self.assertEqual(verify_historical_forecast_contract(self.manifest_path), [])
+
+        self.market[-1]["policy"] = "Causal forecast"
+        self._write_fixture()
+        errors = verify_historical_forecast_contract(self.manifest_path)
+        self.assertTrue(any("reserved for the oracle" in error for error in errors))
+
     def test_noncausal_timing_and_incomplete_block_are_reported(self):
         self.detail[0]["information_available_through_delivery_timestamp"] = (
             self.detail[0]["delivery_timestamp"]

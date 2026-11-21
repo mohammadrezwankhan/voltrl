@@ -54,8 +54,8 @@ class SyntheticStatisticsContractTests(unittest.TestCase):
                     "seeds": 3,
                     "mean_annualized_profit": mean_profit,
                     "standard_deviation": statistics.stdev(profits),
-                    "bootstrap_ci95_lower": mean_profit - 20.0,
-                    "bootstrap_ci95_upper": mean_profit + 20.0,
+                    "bootstrap_ci95_lower": min(profits),
+                    "bootstrap_ci95_upper": max(profits),
                     "mean_oracle_efficiency_percent": statistics.mean(
                         efficiencies
                     ),
@@ -106,6 +106,17 @@ class SyntheticStatisticsContractTests(unittest.TestCase):
                     repository / result_dir / "experiment_manifest.json"
                 )
                 self.assertEqual(errors, [])
+
+    def test_plausible_bootstrap_endpoint_tampering_is_reported(self) -> None:
+        self.summaries[0]["bootstrap_ci95_lower"] = 95.0
+        self.comparisons[0]["bootstrap_ci95_upper"] = 21.0
+        self._write_fixture()
+
+        errors = verify_synthetic_statistics_contract(self.manifest_path)
+        self.assertTrue(
+            any("summary bootstrap_ci95_lower for Policy A" in e for e in errors)
+        )
+        self.assertTrue(any("comparison bootstrap_ci95_upper" in e for e in errors))
 
     def test_summary_statistics_are_recomputed(self) -> None:
         self.summaries[0]["mean_annualized_profit"] = 999.0

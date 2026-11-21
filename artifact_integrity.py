@@ -151,6 +151,13 @@ def verify_artifact_manifest(manifest_path: Path) -> list[str]:
     if extra_records:
         errors.append("undeclared inventory records: " + ", ".join(extra_records))
 
+    root = manifest_path.parent
+    declared = {*outputs, manifest_path.name}
+    for path in sorted(root.rglob("*")):
+        relative_path = path.relative_to(root).as_posix()
+        if relative_path not in declared and (path.is_file() or path.is_symlink()):
+            errors.append(f"undeclared artifact: {relative_path}")
+
     for relative_path in outputs:
         entry = records.get(relative_path)
         if entry is None:
