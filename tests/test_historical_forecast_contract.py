@@ -152,6 +152,20 @@ class HistoricalForecastContractTests(unittest.TestCase):
             any("incomplete 24-hour forecast block" in error for error in errors)
         )
 
+    def test_complete_forecast_blocks_must_start_at_midnight_utc(self):
+        for row in self.detail:
+            for field in (
+                "information_available_through_delivery_timestamp",
+                "delivery_timestamp",
+            ):
+                row[field] = (
+                    datetime.fromisoformat(row[field]) + timedelta(hours=1)
+                ).isoformat()
+        self._write_fixture()
+
+        errors = verify_historical_forecast_contract(self.manifest_path)
+        self.assertTrue(any("23:00 UTC" in error for error in errors))
+
     def test_detail_error_and_summary_drift_are_reported(self):
         self.detail[0]["error"] = 7.0
         self.summary[0]["root_mean_squared_error"] = 99.0

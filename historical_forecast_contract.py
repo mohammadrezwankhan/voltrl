@@ -9,7 +9,7 @@ import math
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime, time
 from pathlib import Path
 from typing import Sequence
 
@@ -337,6 +337,11 @@ def _validate_blocks_and_alignment(
             )
 
     for (case, method, available), block_rows in sorted(blocks.items()):
+        if available.astimezone(UTC).time() != time(23):
+            errors.append(
+                f"forecast block for {case}/{method} must use information through "
+                f"23:00 UTC on the preceding day, found {available.isoformat()}"
+            )
         leads = {row.lead for row in block_rows}
         if len(block_rows) != 24 or leads != EXPECTED_LEADS:
             missing = sorted(EXPECTED_LEADS - leads)
