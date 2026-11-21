@@ -4,6 +4,7 @@
 name: Flagship dashboard
 
 on:
+  pull_request:
   push:
     branches: [main]
     paths:
@@ -16,8 +17,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: ${{ github.event_name == 'pull_request' && format('pages-pr-{0}', github.event.pull_request.number) || format('pages-run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   validate:
@@ -56,6 +57,9 @@ jobs:
   deploy:
     if: ${{ 'workflow' == 'workflow' && github.ref == 'refs/heads/main' }}
     needs: validate
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

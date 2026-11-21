@@ -126,6 +126,20 @@ class HistoricalForecastContractTests(unittest.TestCase):
         )
         self.assertEqual(errors, [])
 
+    def test_oracle_protocol_is_distinct_and_reserved_for_oracle(self):
+        self.market.append({
+            **self.market[0],
+            "policy": "Perfect-foresight upper bound",
+            "information_protocol": "perfect foresight over the holdout (diagnostic only)",
+        })
+        self._write_fixture()
+        self.assertEqual(verify_historical_forecast_contract(self.manifest_path), [])
+
+        self.market[-1]["policy"] = "Causal forecast"
+        self._write_fixture()
+        errors = verify_historical_forecast_contract(self.manifest_path)
+        self.assertTrue(any("reserved for the oracle" in error for error in errors))
+
     def test_noncausal_timing_and_incomplete_block_are_reported(self):
         self.detail[0]["information_available_through_delivery_timestamp"] = (
             self.detail[0]["delivery_timestamp"]
@@ -137,6 +151,20 @@ class HistoricalForecastContractTests(unittest.TestCase):
         self.assertTrue(
             any("incomplete 24-hour forecast block" in error for error in errors)
         )
+
+    def test_complete_forecast_blocks_must_start_at_midnight_utc(self):
+        for row in self.detail:
+            for field in (
+                "information_available_through_delivery_timestamp",
+                "delivery_timestamp",
+            ):
+                row[field] = (
+                    datetime.fromisoformat(row[field]) + timedelta(hours=1)
+                ).isoformat()
+        self._write_fixture()
+
+        errors = verify_historical_forecast_contract(self.manifest_path)
+        self.assertTrue(any("23:00 UTC" in error for error in errors))
 
     def test_detail_error_and_summary_drift_are_reported(self):
         self.detail[0]["error"] = 7.0

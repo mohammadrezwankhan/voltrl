@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
+import numpy as np
+
 METRICS_FILE = "synthetic_seed_metrics.csv"
 SUMMARY_FILE = "synthetic_summary.csv"
 COMPARISONS_FILE = "paired_seed_comparisons.csv"
@@ -345,6 +347,15 @@ def _parse_summaries(
     return summaries
 
 
+def _replay_bootstrap(values: Sequence[float], seed: int) -> tuple[float, float]:
+    series = np.asarray(values, dtype=float)
+    draws = np.random.default_rng(seed).integers(
+        0, len(series), size=(5000, len(series))
+    )
+    lower, upper = np.percentile(series[draws].mean(axis=1), (2.5, 97.5))
+    return float(lower), float(upper)
+
+
 def _validate_summaries(
     by_policy: dict[str, dict[int, SeedMetric]],
     summaries: dict[str, SummaryStatistic],
@@ -357,16 +368,22 @@ def _validate_summaries(
     for policy in sorted(summary_names - policy_names):
         errors.append(f"synthetic summary has no seed metrics for policy {policy}")
 
-    for policy in sorted(policy_names & summary_names):
-        metrics = list(by_policy[policy].values())
+    # The producer assigns RNG seeds in first-appearance policy order.
+    for index, (policy, seed_metrics) in enumerate(by_policy.items()):
+        if policy not in summaries:
+            continue
+        metrics = list(seed_metrics.values())
         summary = summaries[policy]
         profits = [metric.annualized_adjusted_profit for metric in metrics]
         efficiencies = [metric.oracle_efficiency_percent for metric in metrics]
         mean_profit = math.fsum(profits) / len(profits)
         standard_deviation = statistics.stdev(profits) if len(profits) > 1 else 0.0
         mean_oracle = math.fsum(efficiencies) / len(efficiencies)
+        lower, upper = _replay_bootstrap(profits, 1000 + index)
         comparisons = (
             ("seeds", float(summary.seeds), float(len(metrics))),
+            ("bootstrap_ci95_lower", summary.bootstrap_ci95_lower, lower),
+            ("bootstrap_ci95_upper", summary.bootstrap_ci95_upper, upper),
             (
                 "mean_annualized_profit",
                 summary.mean_annualized_profit,
@@ -482,8 +499,11 @@ def _validate_comparisons(
         recomputed_positive = (
             sum(difference > 0.0 for difference in differences) / len(differences)
         )
+        expected_lower, expected_upper = _replay_bootstrap(differences, 2000 + line - 2)
         comparisons = (
             ("seeds", float(seeds), float(len(differences))),
+            ("bootstrap_ci95_lower", lower, expected_lower),
+            ("bootstrap_ci95_upper", upper, expected_upper),
             ("mean_paired_difference", mean_difference, recomputed_mean),
             (
                 "positive_seed_fraction",

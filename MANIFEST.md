@@ -2,11 +2,11 @@
 
 # VoltRL revision 2 submission manifest
 
-## Publication deliverables
+## Public availability
 
-- `VoltRL_IntechOpen_Article/VoltRL_IntechOpen_Manuscript_Revision2.docx` — IntechOpen-formatted ACRT manuscript generated from the preserved reference template.
-- `VoltRL_IntechOpen_Article/Response_to_Reviewers_Revision2.md` — point-by-point response to both Grade A reviews.
-- `Project_VoltRL_Submission_Revision2.zip` — submission and reproducibility archive.
+This repository contains the benchmark code, documentation and archived results.
+The IntechOpen manuscript, reviewer response, template, build and QA files, and
+submission ZIP are absent from this tree and the public release assets.
 
 ## Scientific implementation
 
@@ -46,18 +46,13 @@
   machine-readable `data/opsd_source.json` record;
 - six result figures in PNG and PDF, with both formats declared in the manifest.
 
-The 124 MB OPSD source CSV is not duplicated in the public repository or final archive. Its official version, DOI `10.25832/time_series/2020-10-06`, local SHA-256, and reproduction instructions are recorded under `data/`.
-
-## Manuscript build and QA
-
-- `VoltRL_IntechOpen_Article/reference_template.docx` — preserved IntechOpen template; SHA-256 `6F8338130EDBF52CFA73EB2264015465E75FBEA7488F1C643D0A5302A4D489E3`.
-- `VoltRL_IntechOpen_Article/build_voltrl_manuscript_revised.py` — deterministic revision-2 DOCX builder.
-- `VoltRL_IntechOpen_Article/validate_revised_manuscript.py` — abstract, keywords, headings, citations, references, captions, declarations, metadata, alt-text, and placeholder audit.
-- `VoltRL_IntechOpen_Article/.qa/revision2_compliance_report.json` — machine-readable compliance result.
-- `VoltRL_IntechOpen_Article/.qa/word_render_revision2/` — Microsoft Word render and page images used for full visual inspection.
+The public repository does not redistribute the 124 MB OPSD source CSV. Its
+official version, DOI `10.25832/time_series/2020-10-06`, SHA-256 digest, and
+reproduction instructions are recorded in [the data guide](data/README.md).
 
 ## Public record
 
 Repository: <https://github.com/mohammadrezwankhan/voltrl>
 
-Revision 2 is released as `v1.1.0`; the exact commit is recorded in the final manuscript, reviewer response, and archive after publication of the synchronized artifacts.
+The software and results are tagged [v1.1.0](https://github.com/mohammadrezwankhan/voltrl/releases/tag/v1.1.0).
+The archived experiment manifest records the source commit used to generate the results.

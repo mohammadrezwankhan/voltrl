@@ -54,6 +54,14 @@ class ArtifactIntegrityTests(unittest.TestCase):
         errors = verify_artifact_manifest(self.manifest_path)
         self.assertIn("SHA-256 mismatch for metrics.csv", errors)
 
+    def test_unlisted_file_is_reported(self):
+        record_artifact_inventory(self.manifest_path)
+        (self.result_dir / "figures" / "unlisted.pdf").write_bytes(b"extra")
+        self.assertEqual(
+            verify_artifact_manifest(self.manifest_path),
+            ["undeclared artifact: figures/unlisted.pdf"],
+        )
+
     def test_boolean_size_and_malformed_digest_are_rejected(self):
         (self.result_dir / "metrics.csv").write_bytes(b"x")
         self.outputs = ["metrics.csv"]
