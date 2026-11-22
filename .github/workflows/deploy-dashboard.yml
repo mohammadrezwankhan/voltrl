@@ -30,6 +30,7 @@ jobs:
         with:
           persist-credentials: false
           sparse-checkout: |
+            .github/workflows
             docs
             assets
           sparse-checkout-cone-mode: true
@@ -52,6 +53,47 @@ jobs:
               assert not item.is_symlink(), 'Pages artifacts cannot contain symbolic links: ' + str(item)
           assert '<script src="https://' not in html and "<script src='https://" not in html, 'Dashboard scripts must be self-contained'
           print('Static dashboard, identity, and lesson JSON validated.')
+          PY
+      - name: Verify Pages job graph
+        run: |
+          python3 - <<'PY'
+          import json
+          import subprocess
+
+          workflow = subprocess.check_output(
+              ["yq", "-o=json", ".", ".github/workflows/deploy-dashboard.yml"],
+              text=True,
+          )
+          jobs = json.loads(workflow)["jobs"]
+          validate = jobs["validate"]
+          deploy = jobs["deploy"]
+          needs = deploy.get("needs", [])
+          assert "validate" in ([needs] if isinstance(needs, str) else needs), "deploy must depend on validate"
+
+          def action_steps(action):
+              return [
+                  (job_id, step)
+                  for job_id, job in jobs.items()
+                  for step in job.get("steps", [])
+                  if step.get("uses", "").startswith(action + "@")
+              ]
+
+          uploads = action_steps("actions/upload-pages-artifact")
+          publishers = action_steps("actions/deploy-pages")
+          assert len(uploads) == 1 and uploads[0][0] == "validate", "artifact upload must be in validate"
+          assert len(publishers) == 1 and publishers[0][0] == "deploy", "Pages publish must be in deploy"
+          upload = uploads[0][1]
+          step_names = [step.get("name") for step in validate["steps"]]
+          upload_index = validate["steps"].index(upload)
+          static_check = "Validate static dashboard and lesson configuration"
+          assert static_check in step_names[:upload_index], "upload must follow static validation"
+          assert "Verify Pages job graph" in step_names[:upload_index], "upload must follow the job-graph check"
+
+          # Assemble the opener so Actions does not evaluate the expected expression.
+          main_only = "$" + "{{ 'workflow' == 'workflow' && github.ref == 'refs/heads/main' }}"
+          assert upload.get("if") == main_only, "upload must be main-only"
+          assert deploy.get("if") == main_only, "deploy must be main-only"
+          print("Pages upload and deploy are in separate, main-only stages.")
           PY
       # Let artifact finalization cross a job boundary before Pages looks it up.
       - name: Upload static docs
