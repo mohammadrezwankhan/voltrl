@@ -22,6 +22,7 @@ concurrency:
 
 jobs:
   validate:
+    name: Validate flagship dashboard
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
