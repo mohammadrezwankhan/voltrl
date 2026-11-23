@@ -6,7 +6,7 @@ VoltRL is a local research benchmark with a static teaching site. The source con
 
 ## Reporting
 
-For a sensitive vulnerability, use GitHub's private vulnerability reporting option **if the repository currently offers it**, or an already verified private channel to the owner. This review did not establish that private reporting is enabled and does not invent a contact address. Avoid posting credentials, private datasets or exploit details in a public issue. A sanitized public issue can describe a non-sensitive reproducibility or validation defect.
+For a sensitive vulnerability, open [GitHub Security Advisories](https://github.com/mohammadrezwankhan/voltrl/security/advisories) and select **Report a vulnerability**. If the option is unavailable, use an already verified private channel to the owner. Avoid posting credentials, private datasets or exploit details in a public issue. A sanitized public issue can describe a non-sensitive reproducibility or validation defect.
 
 Include the affected source SHA, module/command, minimal synthetic reproduction, expected/actual behavior and impact. For a scientific-integrity issue, identify the affected result bundle, artifact path and failed claim-specific check. Preserve the original bytes and logs; do not replace recorded hashes to make a failure disappear.
 
