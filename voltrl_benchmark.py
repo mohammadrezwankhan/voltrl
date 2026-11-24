@@ -517,8 +517,8 @@ def _deterministic_value_update(
 
 def _seasonal_features(timestamp: pd.Timestamp) -> np.ndarray:
     hour = float(timestamp.hour)
-    week_hour = float(timestamp.dayofweek * 24 + timestamp.hour)
-    year_hour = float((timestamp.dayofyear - 1) * 24 + timestamp.hour)
+    week_hour = float(timestamp.day_of_week * 24 + timestamp.hour)
+    year_hour = float((timestamp.day_of_year - 1) * 24 + timestamp.hour)
     return np.array(
         [
             math.sin(2.0 * math.pi * hour / 24.0),

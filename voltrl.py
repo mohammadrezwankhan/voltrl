@@ -812,7 +812,7 @@ def generate_synthetic_prices(
     timestamps = pd.date_range("2023-01-01", periods=hours, freq="h", tz="UTC")
     hour = np.arange(hours)
     hour_of_day = timestamps.hour.to_numpy()
-    day_of_week = timestamps.dayofweek.to_numpy()
+    day_of_week = timestamps.day_of_week.to_numpy()
 
     daily = 17.0 * np.sin(2.0 * np.pi * (hour_of_day - 8.0) / 24.0)
     second_harmonic = 5.0 * np.sin(4.0 * np.pi * (hour_of_day - 15.0) / 24.0)
